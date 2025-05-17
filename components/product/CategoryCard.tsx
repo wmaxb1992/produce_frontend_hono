@@ -75,14 +75,14 @@ const CategoryCard: React.FC<CategoryCardProps> = ({ category, isSelected, onPre
 
 const styles = StyleSheet.create({
   wrapper: {
-    width: 80,
+    width: 72, // Reduced from 80 by 10%
     alignItems: 'center',
     marginRight: 12,
   },
   container: {
-    width: 80,
-    height: 80,
-    borderRadius: 12,
+    width: 72, // Reduced from 80 by 10%
+    height: 72, // Reduced from 80 by 10%
+    borderRadius: 11, // Slightly reduced to maintain proportions
     overflow: 'hidden',
     marginBottom: 2,
   },
