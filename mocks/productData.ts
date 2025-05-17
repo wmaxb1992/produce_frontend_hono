@@ -534,21 +534,15 @@ export const mockCategories: Category[] = [
     subcategories: mockSubcategories.filter(sub => sub.categoryId === 'cat2'),
   },
   {
-    id: 'cat3',
-    name: 'Meat & Fish',
-    image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
-    subcategories: mockSubcategories.filter(sub => sub.categoryId === 'cat3'),
-  },
-  {
     id: 'cat4',
-    name: 'Dairy',
-    image: 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    name: 'Eggs & Dairy',
+    image: '/assets/images/cat_eggs_dairy.png',
     subcategories: mockSubcategories.filter(sub => sub.categoryId === 'cat4'),
   },
   {
     id: 'cat5',
-    name: 'Bakery',
-    image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    name: 'Jams & Preserves',
+    image: '/assets/images/cat_jams.png',
     subcategories: [],
   },
   {
@@ -556,6 +550,12 @@ export const mockCategories: Category[] = [
     name: 'Herbs',
     image: '/assets/images/cat_herbs.png',
     subcategories: [],
+  },
+  {
+    id: 'cat3',
+    name: 'Meat & Fish',
+    image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    subcategories: mockSubcategories.filter(sub => sub.categoryId === 'cat3'),
   },
 ];
 

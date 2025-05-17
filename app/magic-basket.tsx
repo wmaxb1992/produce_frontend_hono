@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { Product } from '@/types';
 import { useRouter, Stack } from 'expo-router';
 import { Sparkles, ShoppingBasket, Check, X, MapPin } from 'lucide-react-native';
 import useThemeStore from '@/store/useThemeStore';
@@ -22,7 +23,7 @@ export default function MagicBasketScreen() {
   
   // Add error handling for theme store
   let theme;
-  let colors;
+  let colors: any;
   
   try {
     const { getThemeValues } = useThemeStore();
@@ -51,7 +52,7 @@ export default function MagicBasketScreen() {
   }
   
   // Add error handling for product store
-  let products = [];
+  let products: Array<Product> = [];
   try {
     const productStore = useProductStore();
     products = productStore.products || [];
@@ -60,7 +61,7 @@ export default function MagicBasketScreen() {
   }
   
   // Add error handling for cart store
-  let generateMagicCart = (productIds, products) => {
+  let generateMagicCart = (productIds: string[], allProducts: Product[]) => {
     console.warn("generateMagicCart function not available");
   };
   
@@ -70,7 +71,7 @@ export default function MagicBasketScreen() {
       generateMagicCart = cartStore.generateMagicCart;
     } else if (cartStore && typeof cartStore.addItem === 'function') {
       // Fallback implementation if generateMagicCart doesn't exist
-      generateMagicCart = (productIds, allProducts) => {
+      generateMagicCart = (productIds: string[], allProducts: Product[]) => {
         try {
           // Clear cart first (if clearCart exists)
           if (typeof cartStore.clearCart === 'function') {
@@ -81,7 +82,7 @@ export default function MagicBasketScreen() {
           productIds.forEach(productId => {
             const product = allProducts.find(p => p.id === productId);
             if (product) {
-              cartStore.addItem(product, 1);
+              cartStore.addItem(product as Product, 1);
             }
           });
         } catch (error) {
@@ -173,20 +174,18 @@ export default function MagicBasketScreen() {
     // Simulate API call to generate basket
     setTimeout(() => {
       // Use user preferences to select products
-      const favoriteCategories = user?.preferences?.favoriteCategories || [];
       const dietaryRestrictions = user?.preferences?.dietaryRestrictions || [];
       
       // Filter products based on preferences
       let recommendedProducts = products.filter(product => {
-        // Match favorite categories
-        const matchesCategory = favoriteCategories.length === 0 || 
-          favoriteCategories.includes(product.category);
+        // Match categories
+        const matchesCategory = true; // Since we don't have favoriteCategories in the user type
         
         // Match dietary restrictions (e.g., organic)
         const matchesDietary = !dietaryRestrictions.includes('organic') || product.organic;
         
         // Prioritize fresh products
-        const isFresh = product.freshness > 80;
+        const isFresh = (product.freshness ?? 0) > 80;
         
         // Prioritize in-season products
         const isInSeason = product.inSeason;
@@ -226,6 +225,8 @@ export default function MagicBasketScreen() {
     generateMagicCart(selectedProducts, products);
     router.push('/cart');
   };
+  
+
   
   return (
     <>

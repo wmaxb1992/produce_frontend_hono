@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, ViewStyle, TextStyle, ImageStyle, Image } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, ViewStyle, TextStyle, ImageStyle, Image, Animated, Easing } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, Filter, Home as HomeIcon, Plus, Minus } from 'lucide-react-native';
+import { Search, Filter, Home as HomeIcon, Plus, Minus, Grid, List } from 'lucide-react-native';
 import useThemeStore from '@/store/useThemeStore';
 import useProductStore from '@/store/useProductStore';
 import useFarmStore from '@/store/useFarmStore';
@@ -21,8 +21,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: defaultColors.light.background,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
   },
   addressBar: {
     flexDirection: 'row',
@@ -57,7 +57,7 @@ const styles = StyleSheet.create({
   },
   searchText: {
     marginLeft: 8,
-    fontSize: 16,
+    fontSize: 14,
   },
   searchInput: {
     flex: 1,
@@ -68,41 +68,41 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 4,
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 0,
   },
   categoriesSectionHeader: {
-    marginBottom: 3,
+    marginBottom: 0,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: defaultColors.light.text,
     marginHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   clearButton: {
-    padding: 8,
-    borderRadius: 8,
+    color: defaultColors.light.primary, 
+    padding: 3,
+    borderRadius: 0,
     marginLeft: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    marginRight: 16,
+    borderColor: defaultColors.light.border,
+    
   },
   categoriesContainer: {
     flexDirection: 'row',
-    marginBottom: 16,
-    paddingBottom: 8,
+    marginBottom: 4,
+    paddingBottom: 0,
   },
   subcategoriesContainer: {
     marginHorizontal: 0,
+    marginBottom: 4,
   },
   subcategoriesContent: {
     paddingHorizontal: 16,
@@ -111,6 +111,9 @@ const styles = StyleSheet.create({
   },
   varietiesContainer: {
     flexDirection: 'row',
+    marginBottom: 0,
+    paddingBottom: 0,
+    paddingHorizontal: 16,
   },
   farmsContainer: {
     flexDirection: 'row',
@@ -122,7 +125,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   subcategoryList: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 1,
   },
   varietyList: {
     paddingHorizontal: 16,
@@ -195,25 +198,94 @@ const styles = StyleSheet.create({
     marginLeft: -16,
   },
   featuredContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 6,
     gap: 16,
   },
   featuredCard: {
-    width: 240,
+    width: 200,
     backgroundColor: '#fff',
     borderRadius: 8,
     overflow: 'hidden',
+  },
+  bannerContainer: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    height: 160,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  bannerBackground: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  bannerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  bannerTextContent: {
+    flex: 1,
+  },
+  bannerTitle: {
+    color: '#fff',
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 4,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  bannerSubtitle: {
+    color: '#fff',
+    fontSize: 16,
+    maxWidth: '90%',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
+  bannerButton: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginLeft: 16,
+  },
+  bannerButtonText: {
+    color: '#4CAF50',
+    fontWeight: '600',
+    fontSize: 14,
   },
   featuredImage: {
     width: '100%',
     height: 144,
     resizeMode: 'cover',
+    position: 'relative',
+  },
+  featuredImageStepper: {
+    position: 'absolute',
+    right: 8,
+    bottom: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 6,
+    padding: 4,
   },
   featuredInfo: {
-    padding: 12,
+    padding: 3,
   },
   featuredTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -223,7 +295,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   featuredRating: {
-    fontSize: 14,
+    fontSize: 1,
     color: '#666',
   },
   featuredTime: {
@@ -251,8 +323,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 8,
-    paddingTop: 8,
+    marginTop: 2,
+    paddingTop: 0,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
   },
@@ -260,19 +332,54 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f5f5f5',
-    borderRadius: 6,
+    borderRadius: 20,
+    padding: 1,
     overflow: 'hidden',
   },
   stepperButton: {
-    width: 32,
-    height: 32,
+    width: 10,
+    height: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepperText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
+  },
+  viewToggle: {
+    padding: 8,
+  },
+  varietyListContainer: {
+    marginTop: 16,
+  },
+  varietySection: {
+    marginBottom: 24,
+    paddingHorizontal: 16,
+  },
+  varietyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  varietyCount: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+  },
+  varietyRow: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  varietyName: {
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  varietyDescription: {
+    fontSize: 14,
+    color: '#666',
   }
 });
 
@@ -284,6 +391,41 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
   const router = useRouter();
   const { theme } = useThemeStore();
   const themeColors = theme?.colors || defaultColors.light;
+  const floatingAnim = useRef(new Animated.Value(0)).current;
+
+  // Create floating animation
+  useEffect(() => {
+    const floatLoop = () => {
+      Animated.sequence([
+        Animated.timing(floatingAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease),
+        }),
+        Animated.timing(floatingAnim, {
+          toValue: 0,
+          duration: 1500,
+          useNativeDriver: true,
+          easing: Easing.inOut(Easing.ease),
+        }),
+      ]).start(() => floatLoop());
+    };
+
+    floatLoop();
+    return () => {
+      floatingAnim.setValue(0);
+    };
+  }, []);
+
+  const animatedStyle = {
+    transform: [{
+      translateY: floatingAnim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, -15],
+      })
+    }]
+  };
 
   const { products, categories } = useProductStore();
   const { farms, farmPosts } = useFarmStore();
@@ -297,6 +439,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
   const [preHarvestProducts, setPreHarvestProducts] = useState<Product[]>([]);
   const [inSeasonProducts, setInSeasonProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [isListView, setIsListView] = useState(true);
 
   const getFreshProducts = useCallback(() => {
     return products.filter(product => product.freshness != null && product.freshness >= 90 && product.inStock);
@@ -433,6 +576,29 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
         </Text>
       </TouchableOpacity>
 
+      {/* Magic Basket Banner */}
+      <TouchableOpacity 
+        style={styles.bannerContainer}
+        onPress={() => router.push('/magic-basket')}
+      >
+        <Image 
+          source={require('@/assets/images/banner_gif.gif')}
+          style={styles.bannerBackground}
+          resizeMode="cover"
+        />
+        <View style={styles.bannerContent}>
+          <View style={styles.bannerTextContent}>
+            <Text style={styles.bannerTitle}>Magic Basket</Text>
+            <Text style={styles.bannerSubtitle}>
+              Get a personalized basket curated just for you
+            </Text>
+          </View>
+          <View style={styles.bannerButton}>
+            <Text style={styles.bannerButtonText}>Try Now</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+
       {/* Categories */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -486,8 +652,8 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
         </View>
       )}
 
-      {/* Varieties - Only show if a subcategory is selected */}
-      {selectedSubcategory && varieties.length > 0 && (
+      {/* Varieties - Only show if a subcategory is selected and not in list view */}
+      {selectedSubcategory && varieties.length > 0 && !isListView && (
         <View style={[styles.section, { marginTop: 0 }]}>
           <ScrollView
             horizontal
@@ -551,31 +717,12 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                 style={styles.featuredCard}
                 onPress={() => handleProductPress(product.id)}
               >
-                <Image
-                  source={{ uri: product.image }}
-                  style={styles.featuredImage}
-                />
-                <View style={styles.featuredInfo}>
-                  <Text style={styles.featuredTitle} numberOfLines={1}>
-                    {product.name}
-                  </Text>
-                  <View style={styles.featuredMeta}>
-                    <Text style={styles.featuredRating}>
-                      {product.rating} ★ ({product.reviewCount})
-                    </Text>
-                    <Text style={styles.featuredTime}>
-                      • {Math.round(Math.random() * 20 + 20)} min
-                    </Text>
-                  </View>
-                  <View style={styles.farmInfo}>
-                    <Text style={styles.farmName}>{product.farmName}</Text>
-                    <Text style={styles.farmLocation}>San Francisco, CA</Text>
-                  </View>
-                  
-                  <View style={styles.addToCartContainer}>
-                    <Text style={styles.featuredPrice}>
-                      ${product.price.toFixed(2)}
-                    </Text>
+                <View>
+                  <Image
+                    source={{ uri: product.image }}
+                    style={styles.featuredImage}
+                  />
+                  <View style={styles.featuredImageStepper}>
                     <View style={styles.stepper}>
                       <TouchableOpacity 
                         style={styles.stepperButton}
@@ -597,6 +744,29 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
                     </View>
                   </View>
                 </View>
+                <View style={styles.featuredInfo}>
+                  <Text style={styles.featuredTitle} numberOfLines={1}>
+                    {product.name}
+                  </Text>
+                  <View style={styles.featuredMeta}>
+                    <Text style={styles.featuredRating}>
+                      {product.rating} ★ ({product.reviewCount})
+                    </Text>
+                    <Text style={styles.featuredTime}>
+                      • {Math.round(Math.random() * 20 + 20)} min
+                    </Text>
+                  </View>
+                  <View style={styles.farmInfo}>
+                    <Text style={styles.farmName}>{product.farmName}</Text>
+                    <Text style={styles.farmLocation}>San Francisco, CA</Text>
+                  </View>
+                  
+                  <View style={styles.addToCartContainer}>
+                    <Text style={styles.featuredPrice}>
+                      ${product.price.toFixed(2)}
+                    </Text>
+                  </View>
+                </View>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -613,14 +783,47 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
           <ScrollView 
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={styles.productsContainer}
+            style={styles.featuredContainer}
+            contentContainerStyle={styles.featuredContent}
           >
             {preHarvestProducts.map(product => (
-              <ProductCard 
-                key={product.id}
-                product={product}
+              <TouchableOpacity 
+                key={product.id} 
+                style={styles.featuredCard}
                 onPress={() => handleProductPress(product.id)}
-              />
+              >
+                <View>
+                  <Image
+                    source={{ uri: product.image }}
+                    style={styles.featuredImage}
+                  />
+                  <View style={styles.featuredImageStepper}>
+                    <View style={[styles.stepper, { backgroundColor: '#e8f5e9' }]}>
+                      <Text style={[styles.stepperText, { color: '#43a047' }]}>Reserve</Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.featuredInfo}>
+                  <Text style={styles.featuredTitle} numberOfLines={1}>
+                    {product.name}
+                  </Text>
+                  <View style={styles.featuredMeta}>
+                    <Text style={styles.featuredRating}>
+                      Available in {product.estimatedHarvestDate ? Math.ceil((new Date(product.estimatedHarvestDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : '?'} days
+                    </Text>
+                  </View>
+                  <View style={styles.farmInfo}>
+                    <Text style={styles.farmName}>{product.farmName}</Text>
+                    <Text style={styles.farmLocation}>San Francisco, CA</Text>
+                  </View>
+                  
+                  <View style={styles.addToCartContainer}>
+                    <Text style={styles.featuredPrice}>
+                      ${product.price.toFixed(2)}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </View>
@@ -630,20 +833,67 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
       {(selectedCategory || selectedSubcategory || selectedVariety) && (
         <View style={styles.section}>
           <View style={[styles.separator, { backgroundColor: themeColors.border }]} />
-          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-            {filteredProducts.length} Products
-          </Text>
-          
-          <View style={styles.filteredProductsContainer}>
-            {filteredProducts.map(product => (
-              <View key={product.id} style={styles.filteredProductCard}>
-                <ProductCard 
-                  product={product}
-                  onPress={() => handleProductPress(product.id)}
-                />
-              </View>
-            ))}
+          <View style={[styles.sectionHeader, { marginHorizontal: 16 }]}>
+            <Text style={[styles.sectionTitle, { marginHorizontal: 0, marginBottom: 0 }]}>
+              {filteredProducts.length} Products
+            </Text>
+            <TouchableOpacity
+              onPress={() => setIsListView(!isListView)}
+              style={styles.viewToggle}
+            >
+              {isListView ? (
+                <Grid size={24} color={themeColors.text} />
+              ) : (
+                <List size={24} color={themeColors.text} />
+              )}
+            </TouchableOpacity>
           </View>
+          
+          {isListView ? (
+            <ScrollView
+              style={styles.varietyListContainer}
+              showsVerticalScrollIndicator={false}
+            >
+              {subcategories.map(subcategory => (
+                <View key={subcategory.id} style={styles.varietySection}>
+                  <Text style={[styles.varietyTitle, { color: themeColors.text }]}>
+                    {subcategory.name}
+                  </Text>
+                  <Text style={styles.varietyCount}>
+                    {subcategory.varieties?.length || 0} varieties
+                  </Text>
+                  {subcategory.varieties?.map(variety => (
+                    <TouchableOpacity
+                      key={variety.id}
+                      style={styles.varietyRow}
+                      onPress={() => {
+                        setSelectedSubcategory(subcategory.id);
+                        // You might want to handle variety selection here
+                      }}
+                    >
+                      <Text style={[styles.varietyName, { color: themeColors.text }]}>
+                        {variety.emoji} {variety.name}
+                      </Text>
+                      <Text style={styles.varietyDescription}>
+                        {variety.description}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.filteredProductsContainer}>
+              {filteredProducts.map(product => (
+                <View key={product.id} style={styles.filteredProductCard}>
+                  <ProductCard 
+                    product={product}
+                    onPress={() => handleProductPress(product.id)}
+                  />
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       )}
       
