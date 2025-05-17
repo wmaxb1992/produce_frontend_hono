@@ -7,8 +7,10 @@ interface FarmState {
   farms: Farm[];
   farmPosts: FarmPost[];
   followedFarms: string[]; // Array of farm IDs
+  isLoading: boolean;
   
   // Actions
+  fetchFarmData: () => Promise<void>;
   getFarmById: (id: string) => Farm | undefined;
   getFarmsByDeliveryArea: (zipCode: string) => Farm[];
   getPostsByFarmId: (farmId: string) => FarmPost[];
@@ -19,9 +21,29 @@ interface FarmState {
 }
 
 const useFarmStore = create<FarmState>((set, get) => ({
-  farms: mockFarms,
-  farmPosts: mockFarmPosts,
+  farms: [],
+  farmPosts: [],
   followedFarms: [],
+  isLoading: true,
+  
+  fetchFarmData: async () => {
+    set({ isLoading: true });
+    
+    // Simulate a network request with a timeout
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      // After "fetching", set the mock data
+      set({ 
+        farms: mockFarms,
+        farmPosts: mockFarmPosts,
+        isLoading: false
+      });
+    } catch (error) {
+      console.error('Error fetching farm data:', error);
+      set({ isLoading: false });
+    }
+  },
   
   getFarmById: (id) => {
     return get().farms.find(farm => farm.id === id);

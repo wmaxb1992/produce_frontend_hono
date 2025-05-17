@@ -1,100 +1,49 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList, ViewStyle, TextStyle, ImageStyle, Image, Animated, Easing } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, FlatList, Image, Animated, StyleSheet, Easing, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Search, Filter, Home as HomeIcon, Plus, Minus, Grid, List } from 'lucide-react-native';
+import { Filter, Plus, Minus, Grid, List, ArrowUp } from 'lucide-react-native';
 import useThemeStore from '@/store/useThemeStore';
 import useProductStore from '@/store/useProductStore';
 import useFarmStore from '@/store/useFarmStore';
 import defaultColors from '@/constants/colors';
-import { spacing, borderRadius } from '@/constants/theme';
 import type { Category, Subcategory, Variety, Product, Farm, FarmPost } from '@/types';
 import { ScrollView as GestureScrollView } from 'react-native-gesture-handler';
 import ProductCard from '@/components/product/ProductCard';
-import CategoryCard from '@/components/product/CategoryCard';
-import SubcategoryCard from '@/components/product/SubcategoryCard';
-import VarietyChip from '@/components/product/VarietyChip';
-import SeasonalBadge from '@/components/product/SeasonalBadge';
-import FarmCard from '@/components/farm/FarmCard';
 import FarmPostCard from '@/components/farm/FarmPostCard';
+import { homeStyles } from '@/styles/layouts/home';
+import { 
+  Skeleton, 
+  ProductCardSkeleton, 
+  FarmCardSkeleton,
+  CategoryCardSkeleton,
+  BannerSkeleton,
+  AddressBarSkeleton,
+  SearchBarSkeleton
+} from '@/components/ui/Skeleton';
 
+// Import our extracted components
+import AddressBar from '@/components/home/AddressBar';
+import SearchBar from '@/components/home/SearchBar';
+import MagicBasketBanner from '@/components/home/MagicBasketBanner';
+import CategoriesSection from '@/components/home/CategoriesSection';
+import SubcategoriesSection from '@/components/home/SubcategoriesSection';
+import VarietiesSection from '@/components/home/VarietiesSection';
+import FeaturedFarmsSection from '@/components/home/FeaturedFarmsSection';
+
+// Local styles for components not yet moved to separate style files
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: defaultColors.light.background,
-    paddingHorizontal: 0,
-    paddingBottom: 0,
-  },
-  floatingHomeButton: {
-    position: 'absolute',
-    top: 55,
-    right: 15,
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    backgroundColor: defaultColors.light.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    zIndex: 1000,
-  },
-  addressBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 8,
-    marginTop: 48,
-    marginBottom: -10,
-    borderWidth: 1,
-    borderTopWidth: 0,
-    borderColor: '#E5E5E5',
-  },
-  addressContent: {
-    flex: 1,
-  },
-  addressLabel: {
-    fontSize: 12,
-    marginBottom: 2,
-  },
-  addressText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderRadius: 8,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    marginTop: 8,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderBottomWidth: 4,
-    borderColor: '#E5E5E5',
-  },
-  searchText: {
-    marginLeft: 8,
-    fontSize: 14,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 8,
-    color: defaultColors.light.text,
-  },
+  container: homeStyles.container,
   filterButton: {
     marginLeft: 8,
   },
   section: {
     marginBottom: 4,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: '#E5E5E5',
+    marginVertical: 16,
+    marginHorizontal: -16,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -102,123 +51,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 0,
   },
-  categoriesSectionHeader: {
-    marginBottom: 0,
-  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: defaultColors.light.text,
     marginHorizontal: 16,
     marginBottom: 8,
   },
-  clearButton: {
-    color: defaultColors.light.primary, 
-    padding: 3,
-    borderRadius: 0,
-    marginLeft: 8,
-    marginRight: 16,
-    borderColor: defaultColors.light.border,
-    
-  },
-  categoriesContainer: {
-    flexDirection: 'row',
-    marginBottom: 4,
-    paddingBottom: 0,
-  },
-  subcategoriesContainer: {
-    marginHorizontal: 0,
-    marginBottom: 4,
-  },
-  subcategoriesContent: {
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  varietiesContainer: {
-    flexDirection: 'row',
-    marginBottom: 0,
-    paddingBottom: 0,
-    paddingHorizontal: 16,
-  },
-  farmsContainer: {
-    flexDirection: 'row',
-  },
-  productsContainer: {
-    flexDirection: 'row',
-  },
-  categoryList: {
-    paddingHorizontal: 16,
-  },
-  subcategoryList: {
-    paddingHorizontal: 1,
-  },
-  varietyList: {
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  productList: {
-    paddingHorizontal: 16,
-  },
-  farmList: {
-    paddingHorizontal: 16,
-  },
-  farmPostList: {
-    paddingHorizontal: 16,
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-  filterText: {
-    color: defaultColors.light.text,
-    marginRight: 8,
-  },
-  selectedFilters: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  selectedFilter: {
-    backgroundColor: defaultColors.light.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  selectedFilterText: {
-    color: defaultColors.light.white,
-    marginRight: 4,
-  },
-  removeFilterButton: {
-    padding: 4,
-  },
-  removeFilterIcon: {
-    color: defaultColors.light.white,
-  },
-  filteredFarmsContainer: {
-    marginTop: 16,
-  },
-  filteredProductsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
-    gap: 12,
-  },
-  filteredProductCard: {
-    width: '31%',
-    marginBottom: 12,
-  },
-  separator: {
-    height: 1,
-    backgroundColor: '#E5E5E5',
-    marginVertical: 16,
-    marginHorizontal: -16,
+  viewToggle: {
+    padding: 8,
   },
   featuredContainer: {
     marginLeft: -16,
@@ -233,82 +73,33 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
   },
-  bannerContainer: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
-    height: 160,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  bannerBackground: {
-    width: '100%',
-    height: '100%',
-    position: 'absolute',
-  },
-  bannerContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  },
-  bannerTextContent: {
-    flex: 1,
-  },
-  bannerTitle: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 4,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  bannerSubtitle: {
-    color: '#fff',
-    fontSize: 16,
-    maxWidth: '90%',
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 3,
-  },
-  bannerButton: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginLeft: 16,
-  },
-  bannerButtonText: {
-    color: '#4CAF50',
-    fontWeight: '600',
-    fontSize: 14,
-  },
   featuredImage: {
     width: '100%',
-    height: 144,
+    height: 120,
     resizeMode: 'cover',
-    position: 'relative',
   },
   featuredImageStepper: {
     position: 'absolute',
-    right: 8,
-    bottom: 8,
+    bottom: 0,
+    right: 0,
+    padding: 8,
+  },
+  stepper: {
+    flexDirection: 'row',
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 6,
-    padding: 4,
+    borderRadius: 4,
+    overflow: 'hidden',
+    paddingHorizontal: 4,
+  },
+  stepperButton: {
+    padding: 2,
+  },
+  stepperText: {
+    paddingHorizontal: 4,
+    alignSelf: 'center',
   },
   featuredInfo: {
-    padding: 3,
+    padding: 8,
   },
   featuredTitle: {
     fontSize: 14,
@@ -317,79 +108,59 @@ const styles = StyleSheet.create({
   },
   featuredMeta: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   featuredRating: {
-    fontSize: 1,
+    fontSize: 12,
     color: '#666',
   },
   featuredTime: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
-    marginLeft: 4,
-  },
-  featuredPrice: {
-    fontSize: 14,
-    fontWeight: '600',
   },
   farmInfo: {
-    marginTop: 4,
+    marginBottom: 8,
   },
   farmName: {
-    fontSize: 13,
-    color: '#666',
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#333',
   },
   farmLocation: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 2,
+    fontSize: 11,
+    color: '#666',
   },
   addToCartContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 2,
-    paddingTop: 0,
-    borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
   },
-  stepper: {
+  featuredPrice: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  filteredProductsContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f5f5f5',
-    borderRadius: 20,
-    padding: 1,
-    overflow: 'hidden',
-  },
-  stepperButton: {
-    width: 10,
-    height: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stepperText: {
-    fontSize: 12,
-    fontWeight: '500',
-    paddingHorizontal: 10,
-  },
-  viewToggle: {
-    padding: 8,
-  },
-  varietyListContainer: {
-    marginTop: 16,
-  },
-  varietySection: {
-    marginBottom: 24,
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    gap: 12,
     paddingHorizontal: 16,
   },
+  filteredProductCard: {
+    width: '31%',
+    marginBottom: 12,
+  },
+  varietyListContainer: {
+    paddingHorizontal: 16,
+  },
+  varietySection: {
+    marginBottom: 16,
+  },
   varietyTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
   },
   varietyCount: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
     marginBottom: 12,
   },
@@ -406,10 +177,29 @@ const styles = StyleSheet.create({
   varietyDescription: {
     fontSize: 14,
     color: '#666',
+  },
+  // Header styles
+  headerContainer: {
+    backgroundColor: 'white',
+    paddingTop: 8, 
+    paddingBottom: 0,
+    borderBottomWidth: 0,
+    borderBottomColor: '#E5E5E5',
+  },
+  addressBarWrapper: {
+    marginBottom: 8,
+  },
+  searchBarWrapper: {
+    marginBottom: 4,
+    paddingTop: 0,
+  },
+  mainContainer: {
+    flex: 1,
+  },
+  mainContent: {
+    paddingTop: 8,
   }
 });
-
-
 
 interface HomeScreenProps {}
 
@@ -418,6 +208,33 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
   const { theme } = useThemeStore();
   const themeColors = theme?.colors || defaultColors.light;
   const floatingAnim = useRef(new Animated.Value(0)).current;
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [isAddressVisible, setIsAddressVisible] = useState(true);
+  
+  // Get data and loading states from stores
+  const { 
+    products,
+    categories,
+    isLoading: isProductsLoading,
+    fetchProducts
+  } = useProductStore();
+  
+  const {
+    farms,
+    farmPosts,
+    isLoading: isFarmsLoading,
+    fetchFarmData
+  } = useFarmStore();
+
+  // Check if everything is loading
+  const isLoading = isProductsLoading || isFarmsLoading;
+
+  // Fetch data on mount
+  useEffect(() => {
+    fetchProducts();
+    fetchFarmData();
+  }, [fetchProducts, fetchFarmData]);
 
   // Create floating animation
   useEffect(() => {
@@ -425,7 +242,7 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
       Animated.sequence([
         Animated.timing(floatingAnim, {
           toValue: 1,
-          duration: 1500,
+          duration: 3500,
           useNativeDriver: true,
           easing: Easing.inOut(Easing.ease),
         }),
@@ -452,9 +269,6 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
       })
     }]
   };
-
-  const { products, categories } = useProductStore();
-  const { farms, farmPosts } = useFarmStore();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null);
@@ -538,17 +352,6 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     setSelectedVariety(null);
   };
 
-  const handleClearSubcategory = () => {
-    console.log('Clearing subcategory filter');
-    setSelectedSubcategory(null);
-    setSelectedVariety(null);
-  };
-
-  const handleClearVariety = () => {
-    console.log('Clearing variety filter');
-    setSelectedVariety(null);
-  };
-
   const handleSearchPress = () => {
     router.push('/search');
   };
@@ -569,390 +372,388 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     }
   };
 
-  // Filter updates are handled by the useEffect above
+  const handleScroll = (event: any) => {
+    const scrollPosition = event.nativeEvent.contentOffset.y;
+    if (scrollPosition > 20 && isAddressVisible) {
+      setIsAddressVisible(false);
+    } else if (scrollPosition <= 20 && !isAddressVisible) {
+      setIsAddressVisible(true);
+    }
+  };
 
-  return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: themeColors.background }]}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Address Input */}
-      <TouchableOpacity 
-        style={[styles.addressBar, { backgroundColor: themeColors.card }]}
-        onPress={() => router.push('/user/addresses')}
-      >
-        <View style={styles.addressContent}>
-          <Text style={[styles.addressLabel, { color: themeColors.subtext }]}>
-            Deliver to
-          </Text>
-          <Text style={[styles.addressText, { color: themeColors.text }]} numberOfLines={1}>
-            123 Market St, San Francisco, CA 94105
-          </Text>
-        </View>
-      </TouchableOpacity>
-
-      {/* Search Bar */}
-      <TouchableOpacity
-        style={[styles.searchBar, { backgroundColor: themeColors.card }]}
-        onPress={handleSearchPress}
-      >
-        <Search size={20} color={themeColors.subtext} />
-        <Text style={[styles.searchText, { color: themeColors.subtext }]}>
-          Search for farms, products...
-        </Text>
-      </TouchableOpacity>
-
-      {/* Magic Basket Banner */}
-      <TouchableOpacity 
-        style={styles.bannerContainer}
-        onPress={() => router.push('/magic-basket')}
-      >
-        <Image 
-          source={require('@/assets/images/banner_gif.gif')}
-          style={styles.bannerBackground}
-          resizeMode="cover"
-        />
-        <View style={styles.bannerContent}>
-          <View style={styles.bannerTextContent}>
-            <Text style={styles.bannerTitle}>Magic Basket</Text>
-            <Text style={styles.bannerSubtitle}>
-              Get a personalized basket curated just for you
-            </Text>
+  // Skeleton loaders for each section
+  const renderSkeletonLoader = () => {
+    return (
+      <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+        {/* Address and Search Bar Skeleton */}
+        <View style={[styles.headerContainer, { backgroundColor: themeColors.background }]}>
+          <View style={styles.addressBarWrapper}>
+            <AddressBarSkeleton />
           </View>
-          <View style={styles.bannerButton}>
-            <Text style={styles.bannerButtonText}>Try Now</Text>
+          <View style={styles.searchBarWrapper}>
+            <SearchBarSkeleton />
           </View>
         </View>
-      </TouchableOpacity>
 
-      {/* Categories */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-            Categories
-          </Text>
-          {selectedCategory && (
-            <TouchableOpacity
-              style={[styles.clearButton, { backgroundColor: themeColors.card }]}
-              onPress={handleClearFilters}
+        {/* Main content */}
+        <ScrollView contentContainerStyle={styles.mainContent}>
+          {/* Magic Basket Banner Skeleton */}
+          <BannerSkeleton />
+
+          {/* Categories Skeleton */}
+          <View style={styles.section}>
+            <Skeleton height={24} width={120} style={{ marginHorizontal: 16, marginBottom: 12 }} />
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingLeft: 16 }}>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
+                {[1, 2, 3, 4, 5].map((_, index) => (
+                  <CategoryCardSkeleton key={index} />
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+
+          {/* Featured Farms Skeleton */}
+          <View style={styles.section}>
+            <Skeleton height={24} width={150} style={{ marginHorizontal: 16, marginBottom: 12 }} />
+            <ScrollView 
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.featuredContainer}
+              contentContainerStyle={styles.featuredContent}
             >
-              <HomeIcon size={20} color={themeColors.primary} />
-            </TouchableOpacity>
-          )}
-        </View>
-
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.categoriesContainer}
-        >
-          {categories.map((category: Category) => (
-            <CategoryCard
-              key={category.id}
-              category={category}
-              isSelected={selectedCategory === category.id}
-              onPress={() => handleCategoryPress(category.id)}
-            />
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* Subcategories - Only show if a category is selected */}
-      {selectedCategory && subcategories.length > 0 && (
-        <View style={[styles.section, { marginTop: 0 }]}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.subcategoriesContainer}
-            contentContainerStyle={styles.subcategoriesContent}
-          >
-            {subcategories.map((subcategory: Subcategory) => (
-              <SubcategoryCard
-                key={subcategory.id}
-                subcategory={subcategory}
-                isSelected={selectedSubcategory === subcategory.id}
-                onPress={() => handleSubcategoryPress(subcategory.id)}
-              />
-            ))}
-          </ScrollView>
-        </View>
-      )}
-
-      {/* Varieties - Only show if a subcategory is selected and not in list view */}
-      {selectedSubcategory && varieties.length > 0 && !isListView && (
-        <View style={[styles.section, { marginTop: 0 }]}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.varietiesContainer}
-          >
-            {varieties.map((variety: Variety) => (
-              <VarietyChip
-                key={variety.id}
-                variety={variety}
-                isSelected={selectedVariety === variety.id}
-              />
-            ))}
-          </ScrollView>
-        </View>
-      )}
-      
-      {/* Featured Farms - Only show when no category is selected */}
-      {!selectedCategory && farms.length > 0 && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-            Featured Farms
-          </Text>
-          
-          <ScrollView 
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.farmsContainer}
-          >
-            {farms.map(farm => (
-              <FarmCard 
-                key={farm.id}
-                farm={farm}
-              />
-            ))}
-          </ScrollView>
-        </View>
-      )}
-      
-      {/* Fresh Picks - Only show when no category is selected */}
-      {!selectedCategory && freshProducts.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-              Fresh Picks
-            </Text>
-            <TouchableOpacity>
-              <HomeIcon size={24} color={themeColors.text} />
-            </TouchableOpacity>
-          </View>
-          
-          <ScrollView 
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.featuredContainer}
-            contentContainerStyle={styles.featuredContent}
-          >
-            {freshProducts.map(product => (
-              <TouchableOpacity 
-                key={product.id} 
-                style={styles.featuredCard}
-                onPress={() => handleProductPress(product.id)}
-              >
-                <View>
-                  <Image
-                    source={{ uri: product.image }}
-                    style={styles.featuredImage}
-                  />
-                  <View style={styles.featuredImageStepper}>
-                    <View style={styles.stepper}>
-                      <TouchableOpacity 
-                        style={styles.stepperButton}
-                        onPress={() => {
-                          // Handle decrease quantity
-                        }}
-                      >
-                        <Minus size={16} color={themeColors.text} />
-                      </TouchableOpacity>
-                      <Text style={styles.stepperText}>1</Text>
-                      <TouchableOpacity 
-                        style={styles.stepperButton}
-                        onPress={() => {
-                          // Handle increase quantity
-                        }}
-                      >
-                        <Plus size={16} color={themeColors.text} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </View>
-                <View style={styles.featuredInfo}>
-                  <Text style={styles.featuredTitle} numberOfLines={1}>
-                    {product.name}
-                  </Text>
-                  <View style={styles.featuredMeta}>
-                    <Text style={styles.featuredRating}>
-                      {product.rating} ★ ({product.reviewCount})
-                    </Text>
-                    <Text style={styles.featuredTime}>
-                      • {Math.round(Math.random() * 20 + 20)} min
-                    </Text>
-                  </View>
-                  <View style={styles.farmInfo}>
-                    <Text style={styles.farmName}>{product.farmName}</Text>
-                    <Text style={styles.farmLocation}>San Francisco, CA</Text>
-                  </View>
-                  
-                  <View style={styles.addToCartContainer}>
-                    <Text style={styles.featuredPrice}>
-                      ${product.price.toFixed(2)}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-      
-      {/* Pre-Harvest Products - Only show when no category is selected */}
-      {!selectedCategory && preHarvestProducts.length > 0 && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-            Coming Soon (Pre-Harvest)
-          </Text>
-          
-          <ScrollView 
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.featuredContainer}
-            contentContainerStyle={styles.featuredContent}
-          >
-            {preHarvestProducts.map(product => (
-              <TouchableOpacity 
-                key={product.id} 
-                style={styles.featuredCard}
-                onPress={() => handleProductPress(product.id)}
-              >
-                <View>
-                  <Image
-                    source={{ uri: product.image }}
-                    style={styles.featuredImage}
-                  />
-                  <View style={styles.featuredImageStepper}>
-                    <View style={[styles.stepper, { backgroundColor: '#e8f5e9' }]}>
-                      <Text style={[styles.stepperText, { color: '#43a047' }]}>Reserve</Text>
-                    </View>
-                  </View>
-                </View>
-                <View style={styles.featuredInfo}>
-                  <Text style={styles.featuredTitle} numberOfLines={1}>
-                    {product.name}
-                  </Text>
-                  <View style={styles.featuredMeta}>
-                    <Text style={styles.featuredRating}>
-                      Available in {product.estimatedHarvestDate ? Math.ceil((new Date(product.estimatedHarvestDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : '?'} days
-                    </Text>
-                  </View>
-                  <View style={styles.farmInfo}>
-                    <Text style={styles.farmName}>{product.farmName}</Text>
-                    <Text style={styles.farmLocation}>San Francisco, CA</Text>
-                  </View>
-                  
-                  <View style={styles.addToCartContainer}>
-                    <Text style={styles.featuredPrice}>
-                      ${product.price.toFixed(2)}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-      
-      {/* Filtered Products - Show when a filter is applied */}
-      {(selectedCategory || selectedSubcategory || selectedVariety) && (
-        <View style={styles.section}>
-          <View style={[styles.separator, { backgroundColor: themeColors.border }]} />
-          <View style={[styles.sectionHeader, { marginHorizontal: 16 }]}>
-            <Text style={[styles.sectionTitle, { marginHorizontal: 0, marginBottom: 0 }]}>
-              {filteredProducts.length} Products
-            </Text>
-            <TouchableOpacity
-              onPress={() => setIsListView(!isListView)}
-              style={styles.viewToggle}
-            >
-              {isListView ? (
-                <Grid size={24} color={themeColors.text} />
-              ) : (
-                <List size={24} color={themeColors.text} />
-              )}
-            </TouchableOpacity>
-          </View>
-          
-          {isListView ? (
-            <ScrollView
-              style={styles.varietyListContainer}
-              showsVerticalScrollIndicator={false}
-            >
-              {subcategories.map(subcategory => (
-                <View key={subcategory.id} style={styles.varietySection}>
-                  <Text style={[styles.varietyTitle, { color: themeColors.text }]}>
-                    {subcategory.name}
-                  </Text>
-                  <Text style={styles.varietyCount}>
-                    {subcategory.varieties?.length || 0} varieties
-                  </Text>
-                  {subcategory.varieties?.map(variety => (
-                    <TouchableOpacity
-                      key={variety.id}
-                      style={styles.varietyRow}
-                      onPress={() => {
-                        setSelectedSubcategory(subcategory.id);
-                        // You might want to handle variety selection here
-                      }}
-                    >
-                      <Text style={[styles.varietyName, { color: themeColors.text }]}>
-                        {variety.emoji} {variety.name}
-                      </Text>
-                      <Text style={styles.varietyDescription}>
-                        {variety.description}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+              {[1, 2, 3].map((_, index) => (
+                <FarmCardSkeleton key={index} />
               ))}
             </ScrollView>
-          ) : (
-            <View style={styles.filteredProductsContainer}>
-              {filteredProducts.map(product => (
-                <View key={product.id} style={styles.filteredProductCard}>
-                  <ProductCard 
-                    product={product}
-                    onPress={() => handleProductPress(product.id)}
-                  />
-                </View>
-              ))}
-            </View>
-          )}
-        </View>
-      )}
-      
-      {/* Floating Home Button */}
-      <TouchableOpacity
-        style={[styles.floatingHomeButton, { backgroundColor: themeColors.primary }]}
-        onPress={() => {
-          setSelectedCategory(null);
-          setSelectedSubcategory(null);
-          setSelectedVariety(null);
-        }}
-      >
-        <HomeIcon size={24} color={defaultColors.light.background} />
-      </TouchableOpacity>
+          </View>
 
-      {/* From the Farms - Only show when no category is selected */}
-      {!selectedCategory && farmPosts.length > 0 && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
-            From the Farms
-          </Text>
-          
-          {farmPosts.slice(0, 3).map(post => (
-            <FarmPostCard 
-              key={post.id}
-              post={post}
-              onPress={() => handlePostPress(post.id)}
-            />
-          ))}
+          {/* Fresh Picks Skeleton */}
+          <View style={styles.section}>
+            <Skeleton height={24} width={120} style={{ marginHorizontal: 16, marginBottom: 12 }} />
+            <ScrollView 
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.featuredContainer}
+              contentContainerStyle={styles.featuredContent}
+            >
+              {[1, 2, 3, 4].map((_, index) => (
+                <ProductCardSkeleton key={index} />
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Farm Posts Skeleton */}
+          <View style={styles.section}>
+            <Skeleton height={24} width={150} style={{ marginHorizontal: 16, marginBottom: 12 }} />
+            {[1, 2].map((_, index) => (
+              <View key={index} style={{ marginHorizontal: 16, marginBottom: 16 }}>
+                <Skeleton height={200} width="100%" borderRadius={8} />
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+    );
+  };
+
+  if (isLoading) {
+    return renderSkeletonLoader();
+  }
+
+  return (
+    <View style={[styles.mainContainer, { backgroundColor: themeColors.background }]}>
+      {/* Fixed header with proper spacing that doesn't shift */}
+      <View style={[styles.headerContainer, { backgroundColor: themeColors.background }]}>
+        {isAddressVisible && (
+          <View style={styles.addressBarWrapper}>
+            <AddressBar address="123 Market St, San Francisco, CA 94105" />
+          </View>
+        )}
+        <View style={[
+          styles.searchBarWrapper,
+          !isAddressVisible && { marginTop: 55 }
+        ]}>
+          <SearchBar onPress={handleSearchPress} />
         </View>
-      )}
-    </ScrollView>
+      </View>
+
+      {/* Main content */}
+      <ScrollView
+        ref={scrollViewRef}
+        style={[styles.container, { backgroundColor: themeColors.background }]}
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        contentContainerStyle={styles.mainContent}
+      >
+        {/* Magic Basket Banner */}
+        <MagicBasketBanner />
+
+        {/* Categories */}
+        <CategoriesSection 
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onCategoryPress={handleCategoryPress}
+          onClearFilters={handleClearFilters}
+        />
+
+        {/* Subcategories - Only show if a category is selected */}
+        {selectedCategory && subcategories.length > 0 && (
+          <SubcategoriesSection 
+            subcategories={subcategories}
+            selectedSubcategory={selectedSubcategory}
+            onSubcategoryPress={handleSubcategoryPress}
+          />
+        )}
+
+        {/* Varieties - Only show if a subcategory is selected and not in list view */}
+        {selectedSubcategory && varieties.length > 0 && !isListView && (
+          <VarietiesSection 
+            varieties={varieties}
+            selectedVariety={selectedVariety}
+          />
+        )}
+        
+        {/* Featured Farms - Only show when no category is selected */}
+        {!selectedCategory && farms.length > 0 && (
+          <FeaturedFarmsSection farms={farms} />
+        )}
+        
+        {/* Fresh Picks - Only show when no category is selected */}
+        {!selectedCategory && freshProducts.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+                Fresh Picks
+              </Text>
+            </View>
+            
+            <ScrollView 
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.featuredContainer}
+              contentContainerStyle={styles.featuredContent}
+            >
+              {freshProducts.map(product => (
+                <TouchableOpacity 
+                  key={product.id} 
+                  style={styles.featuredCard}
+                  onPress={() => handleProductPress(product.id)}
+                >
+                  <View>
+                    <Image
+                      source={{ uri: product.image }}
+                      style={styles.featuredImage}
+                    />
+                    <View style={styles.featuredImageStepper}>
+                      <View style={styles.stepper}>
+                        <TouchableOpacity 
+                          style={styles.stepperButton}
+                          onPress={() => {
+                            // Handle decrease quantity
+                          }}
+                        >
+                          <Minus size={16} color={themeColors.text} />
+                        </TouchableOpacity>
+                        <Text style={styles.stepperText}>1</Text>
+                        <TouchableOpacity 
+                          style={styles.stepperButton}
+                          onPress={() => {
+                            // Handle increase quantity
+                          }}
+                        >
+                          <Plus size={16} color={themeColors.text} />
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  </View>
+                  <View style={styles.featuredInfo}>
+                    <Text style={styles.featuredTitle} numberOfLines={1}>
+                      {product.name}
+                    </Text>
+                    <View style={styles.featuredMeta}>
+                      <Text style={styles.featuredRating}>
+                        {product.rating} ★ ({product.reviewCount})
+                      </Text>
+                      <Text style={styles.featuredTime}>
+                        • {Math.round(Math.random() * 20 + 20)} min
+                      </Text>
+                    </View>
+                    <View style={styles.farmInfo}>
+                      <Text style={styles.farmName}>{product.farmName}</Text>
+                      <Text style={styles.farmLocation}>San Francisco, CA</Text>
+                    </View>
+                    
+                    <View style={styles.addToCartContainer}>
+                      <Text style={styles.featuredPrice}>
+                        ${product.price.toFixed(2)}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+        
+        {/* Pre-Harvest Products - Only show when no category is selected */}
+        {!selectedCategory && preHarvestProducts.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+              Coming Soon (Pre-Harvest)
+            </Text>
+            
+            <ScrollView 
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.featuredContainer}
+              contentContainerStyle={styles.featuredContent}
+            >
+              {preHarvestProducts.map(product => (
+                <TouchableOpacity 
+                  key={product.id} 
+                  style={styles.featuredCard}
+                  onPress={() => handleProductPress(product.id)}
+                >
+                  <View>
+                    <Image
+                      source={{ uri: product.image }}
+                      style={styles.featuredImage}
+                    />
+                    <View style={styles.featuredImageStepper}>
+                      <View style={[styles.stepper, { backgroundColor: '#e8f5e9' }]}>
+                        <Text style={[styles.stepperText, { color: '#43a047' }]}>Reserve</Text>
+                      </View>
+                    </View>
+                  </View>
+                  <View style={styles.featuredInfo}>
+                    <Text style={styles.featuredTitle} numberOfLines={1}>
+                      {product.name}
+                    </Text>
+                    <View style={styles.featuredMeta}>
+                      <Text style={styles.featuredRating}>
+                        Available in {product.estimatedHarvestDate ? Math.ceil((new Date(product.estimatedHarvestDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : '?'} days
+                      </Text>
+                    </View>
+                    <View style={styles.farmInfo}>
+                      <Text style={styles.farmName}>{product.farmName}</Text>
+                      <Text style={styles.farmLocation}>San Francisco, CA</Text>
+                    </View>
+                    
+                    <View style={styles.addToCartContainer}>
+                      <Text style={styles.featuredPrice}>
+                        ${product.price.toFixed(2)}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+        
+        {/* Filtered Products - Show when a filter is applied */}
+        {(selectedCategory || selectedSubcategory || selectedVariety) && (
+          <View style={styles.section}>
+            <View style={[styles.separator, { backgroundColor: themeColors.border }]} />
+            <View style={[styles.sectionHeader, { marginHorizontal: 16 }]}>
+              <Text style={[styles.sectionTitle, { marginHorizontal: 0, marginBottom: 0 }]}>
+                {filteredProducts.length} Products
+              </Text>
+              <TouchableOpacity
+                onPress={() => setIsListView(!isListView)}
+                style={styles.viewToggle}
+              >
+                {isListView ? (
+                  <Grid size={24} color={themeColors.text} />
+                ) : (
+                  <List size={24} color={themeColors.text} />
+                )}
+              </TouchableOpacity>
+            </View>
+            
+            {isListView ? (
+              <ScrollView
+                style={styles.varietyListContainer}
+                showsVerticalScrollIndicator={false}
+              >
+                {subcategories.map(subcategory => (
+                  <View key={subcategory.id} style={styles.varietySection}>
+                    <Text style={[styles.varietyTitle, { color: themeColors.text }]}>
+                      {subcategory.name}
+                    </Text>
+                    <Text style={styles.varietyCount}>
+                      {subcategory.varieties?.length || 0} varieties
+                    </Text>
+                    {subcategory.varieties?.map(variety => (
+                      <TouchableOpacity
+                        key={variety.id}
+                        style={styles.varietyRow}
+                        onPress={() => {
+                          setSelectedSubcategory(subcategory.id);
+                          // You might want to handle variety selection here
+                        }}
+                      >
+                        <Text style={[styles.varietyName, { color: themeColors.text }]}>
+                          {variety.emoji} {variety.name}
+                        </Text>
+                        <Text style={styles.varietyDescription}>
+                          {variety.description}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                ))}
+              </ScrollView>
+            ) : (
+              <View style={styles.filteredProductsContainer}>
+                {filteredProducts.map(product => (
+                  <View key={product.id} style={styles.filteredProductCard}>
+                    <ProductCard 
+                      product={product}
+                      onPress={() => handleProductPress(product.id)}
+                    />
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+        
+        {/* From the Farms - Only show when no category is selected */}
+        {!selectedCategory && farmPosts.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+              From the Farms
+            </Text>
+            
+            {farmPosts.slice(0, 3).map(post => (
+              <FarmPostCard 
+                key={post.id}
+                post={post}
+                onPress={() => handlePostPress(post.id)}
+              />
+            ))}
+          </View>
+        )}
+      </ScrollView>
+
+      {/* Floating Home Button */}
+      <Animated.View style={[
+        homeStyles.floatingHomeButton, 
+        animatedStyle
+      ]}>
+        <TouchableOpacity
+          onPress={() => {
+            // Scroll to top and reset scroll position
+            scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+          }}
+        >
+          <ArrowUp size={20} color={themeColors.white} />
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
   );
-}
+};
 
 export default HomeScreen;

@@ -9,8 +9,10 @@ interface ProductState {
   selectedSubcategory: string | null;
   selectedVariety: string | null;
   filteredProducts: Product[];
+  isLoading: boolean;
   
   // Actions
+  fetchProducts: () => Promise<void>;
   setSelectedCategory: (categoryId: string | null) => void;
   setSelectedSubcategory: (subcategoryId: string | null) => void;
   setSelectedVariety: (varietyId: string | null) => void;
@@ -19,9 +21,9 @@ interface ProductState {
   getSubcategoryById: (id: string) => Subcategory | undefined;
   getVarietyById: (id: string) => Variety | undefined;
   getProductsByFarmId: (farmId: string) => Product[];
-  getProductsByCategory: (categoryId: string) => Product[];
-  getProductsBySubcategory: (subcategoryId: string) => Product[];
-  getProductsByVariety: (varietyId: string) => Product[];
+  getProductsByCategory: (categoryId: string | null) => Product[];
+  getProductsBySubcategory: (subcategoryId: string | null) => Product[];
+  getProductsByVariety: (varietyId: string | null) => Product[];
   getFreshProducts: (threshold: number) => Product[];
   getPreHarvestProducts: () => Product[];
   getInSeasonProducts: () => Product[];
@@ -29,12 +31,33 @@ interface ProductState {
 }
 
 const useProductStore = create<ProductState>((set, get) => ({
-  products: mockProducts,
-  categories: mockCategories,
+  products: [],
+  categories: [],
   selectedCategory: null,
   selectedSubcategory: null,
   selectedVariety: null,
-  filteredProducts: mockProducts,
+  filteredProducts: [],
+  isLoading: true,
+  
+  fetchProducts: async () => {
+    set({ isLoading: true });
+    
+    // Simulate a network request with a timeout
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // After "fetching", set the mock data
+      set({ 
+        products: mockProducts,
+        categories: mockCategories,
+        filteredProducts: mockProducts,
+        isLoading: false
+      });
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      set({ isLoading: false });
+    }
+  },
   
   setSelectedCategory: (categoryId) => {
     set({ 
@@ -51,9 +74,9 @@ const useProductStore = create<ProductState>((set, get) => ({
     set({ 
       selectedSubcategory: subcategoryId,
       selectedVariety: null,
-      filteredProducts: subcategoryId && subcategoryId !== null
+      filteredProducts: subcategoryId
         ? get().getProductsBySubcategory(subcategoryId)
-        : get().selectedCategory && get().selectedCategory !== null
+        : get().selectedCategory
           ? get().getProductsByCategory(get().selectedCategory)
           : get().products
     });
@@ -62,11 +85,11 @@ const useProductStore = create<ProductState>((set, get) => ({
   setSelectedVariety: (varietyId) => {
     set({ 
       selectedVariety: varietyId,
-      filteredProducts: varietyId && varietyId !== null
+      filteredProducts: varietyId
         ? get().getProductsByVariety(varietyId)
-        : get().selectedSubcategory && get().selectedSubcategory !== null
+        : get().selectedSubcategory
           ? get().getProductsBySubcategory(get().selectedSubcategory)
-          : get().selectedCategory && get().selectedCategory !== null
+          : get().selectedCategory
             ? get().getProductsByCategory(get().selectedCategory)
             : get().products
     });
@@ -103,14 +126,17 @@ const useProductStore = create<ProductState>((set, get) => ({
   },
   
   getProductsByCategory: (categoryId) => {
+    if (!categoryId) return get().products;
     return get().products.filter(product => product.category === categoryId);
   },
   
   getProductsBySubcategory: (subcategoryId) => {
+    if (!subcategoryId) return get().products;
     return get().products.filter(product => product.subcategory === subcategoryId);
   },
   
   getProductsByVariety: (varietyId) => {
+    if (!varietyId) return get().products;
     return get().products.filter(product => product.variety === varietyId);
   },
   

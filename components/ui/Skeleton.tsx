@@ -1,18 +1,12 @@
-import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, ViewStyle, DimensionValue, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withRepeat, 
-  withTiming, 
-  Easing 
-} from 'react-native-reanimated';
-import { useTheme } from '@/store/useThemeStore';
+import useThemeStore from '@/store/useThemeStore';
+import defaultColors from '@/constants/colors';
 
 interface SkeletonProps {
-  width?: number | string;
-  height?: number | string;
+  width?: DimensionValue;
+  height?: DimensionValue;
   borderRadius?: number;
   style?: ViewStyle;
 }
@@ -23,28 +17,30 @@ export const Skeleton = ({
   borderRadius = 4,
   style 
 }: SkeletonProps) => {
-  const { theme, isDark } = useTheme();
-  const styles = createStyles(theme);
+  const { theme, themeType: isDark } = useThemeStore();
+  const themeColors = theme?.colors || defaultColors.light;
+  const styles = createStyles(themeColors);
   
-  const translateX = useSharedValue(-300);
+  const translateX = useRef(new Animated.Value(-300)).current;
   
-  React.useEffect(() => {
-    translateX.value = withRepeat(
-      withTiming(300, { 
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.timing(translateX, {
+        toValue: 300,
         duration: 1500,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      }),
-      -1,
-      false
+        useNativeDriver: true,
+      })
     );
-  }, []);
+    
+    animation.start();
+    
+    return () => {
+      animation.stop();
+    };
+  }, [translateX]);
   
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
-  
-  const baseColor = isDark ? theme.colors.gray[800] : theme.colors.gray[200];
-  const highlightColor = isDark ? theme.colors.gray[700] : theme.colors.gray[100];
+  const baseColor = isDark === 'dark' ? themeColors.gray[800] : themeColors.gray[200];
+  const highlightColor = isDark === 'dark' ? themeColors.gray[700] : themeColors.gray[100];
   
   return (
     <View 
@@ -54,7 +50,14 @@ export const Skeleton = ({
         style
       ]}
     >
-      <Animated.View style={[styles.shimmer, animatedStyle]}>
+      <Animated.View
+        style={[
+          styles.shimmer,
+          {
+            transform: [{ translateX }]
+          }
+        ]}
+      >
         <LinearGradient
           colors={[baseColor, highlightColor, baseColor]}
           start={{ x: 0, y: 0 }}
@@ -67,8 +70,9 @@ export const Skeleton = ({
 };
 
 export const ProductCardSkeleton = () => {
-  const { theme } = useTheme();
-  const styles = createStyles(theme);
+  const { theme } = useThemeStore();
+  const themeColors = theme?.colors || defaultColors.light;
+  const styles = createStyles(themeColors);
   
   return (
     <View style={styles.productCard}>
@@ -84,8 +88,9 @@ export const ProductCardSkeleton = () => {
 };
 
 export const FarmCardSkeleton = () => {
-  const { theme } = useTheme();
-  const styles = createStyles(theme);
+  const { theme } = useThemeStore();
+  const themeColors = theme?.colors || defaultColors.light;
+  const styles = createStyles(themeColors);
   
   return (
     <View style={styles.farmCard}>
@@ -99,10 +104,61 @@ export const FarmCardSkeleton = () => {
   );
 };
 
-const createStyles = (theme: any) =>
+export const CategoryCardSkeleton = () => {
+  const { theme } = useThemeStore();
+  const themeColors = theme?.colors || defaultColors.light;
+  const styles = createStyles(themeColors);
+  
+  return (
+    <View style={styles.categoryCard}>
+      <Skeleton height={80} width={80} borderRadius={12} />
+      <View style={styles.categoryLabel}>
+        <Skeleton width={60} height={16} />
+      </View>
+    </View>
+  );
+};
+
+export const BannerSkeleton = () => {
+  const { theme } = useThemeStore();
+  const themeColors = theme?.colors || defaultColors.light;
+  const styles = createStyles(themeColors);
+  
+  return (
+    <View style={styles.banner}>
+      <Skeleton height={160} width="100%" borderRadius={8} />
+    </View>
+  );
+};
+
+export const AddressBarSkeleton = () => {
+  const { theme } = useThemeStore();
+  const themeColors = theme?.colors || defaultColors.light;
+  const styles = createStyles(themeColors);
+  
+  return (
+    <View style={styles.addressBar}>
+      <Skeleton height={40} width="100%" borderRadius={6} />
+    </View>
+  );
+};
+
+export const SearchBarSkeleton = () => {
+  const { theme } = useThemeStore();
+  const themeColors = theme?.colors || defaultColors.light;
+  const styles = createStyles(themeColors);
+  
+  return (
+    <View style={styles.searchBar}>
+      <Skeleton height={46} width="100%" borderRadius={8} />
+    </View>
+  );
+};
+
+const createStyles = (themeColors: any) =>
   StyleSheet.create({
     container: {
-      backgroundColor: theme.isDark ? theme.colors.gray[800] : theme.colors.gray[200],
+      backgroundColor: themeColors.gray[200],
       overflow: 'hidden',
     },
     shimmer: {
@@ -113,8 +169,9 @@ const createStyles = (theme: any) =>
       flex: 1,
     },
     productCard: {
+      width: 200,
       borderRadius: 8,
-      backgroundColor: theme.colors.card,
+      backgroundColor: themeColors.card,
       overflow: 'hidden',
       marginBottom: 16,
     },
@@ -122,8 +179,9 @@ const createStyles = (theme: any) =>
       padding: 12,
     },
     farmCard: {
+      width: 200,
       borderRadius: 8,
-      backgroundColor: theme.colors.card,
+      backgroundColor: themeColors.card,
       overflow: 'hidden',
       marginBottom: 16,
     },
@@ -131,6 +189,28 @@ const createStyles = (theme: any) =>
       padding: 12,
     },
     mb8: {
+      marginBottom: 8,
+    },
+    categoryCard: {
+      marginRight: 12,
+      alignItems: 'center',
+    },
+    categoryLabel: {
+      marginTop: 8,
+      alignItems: 'center',
+    },
+    banner: {
+      marginHorizontal: 16,
+      marginBottom: 16,
+      borderRadius: 8,
+      overflow: 'hidden',
+    },
+    addressBar: {
+      marginHorizontal: 16,
+      marginBottom: 8,
+    },
+    searchBar: {
+      marginHorizontal: 16,
       marginBottom: 8,
     },
   });

@@ -14,9 +14,10 @@ export const homeStyles = StyleSheet.create({
   addressBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 48,
+    marginTop: 60,
     marginBottom: 0, // Removed gap
     paddingHorizontal: padding.md,
+
   },
   addressBar: {
     flex: 1,
