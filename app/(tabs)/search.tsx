@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   },
   searchContainer: {
     flexDirection: 'row',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   searchBar: {
     flex: 1,

@@ -24,35 +24,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     paddingBottom: 0,
   },
-  floatingHomeButton: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: defaultColors.light.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-    zIndex: 1000,
-  },
   addressBar: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     borderRadius: 8,
-    marginTop: 48,
-    marginBottom: -10,
+    marginTop: 40,
+    marginBottom: 0,
     borderWidth: 1,
     borderTopWidth: 0,
+    borderBottomWidth: 0,
     borderColor: '#E5E5E5',
   },
   addressContent: {
@@ -69,16 +50,12 @@ const styles = StyleSheet.create({
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    padding: 8,
     borderRadius: 8,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-    borderTopLeftRadius: 0,
-    borderTopRightRadius: 0,
-    marginTop: 8,
-    marginBottom: 10,
-    borderWidth: 1,
     borderBottomWidth: 4,
+    marginTop: 8,
+    marginBottom: 16,
+    borderWidth: 1,
     borderColor: '#E5E5E5',
   },
   searchText: {
@@ -234,7 +211,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   bannerContainer: {
-    marginHorizontal: 16,
+    marginHorizontal: 14,
     marginBottom: 16,
     borderRadius: 12,
     overflow: 'hidden',
@@ -923,18 +900,6 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
         </View>
       )}
       
-      {/* Floating Home Button */}
-      <TouchableOpacity
-        style={[styles.floatingHomeButton, { backgroundColor: themeColors.primary }]}
-        onPress={() => {
-          setSelectedCategory(null);
-          setSelectedSubcategory(null);
-          setSelectedVariety(null);
-        }}
-      >
-        <HomeIcon size={24} color={defaultColors.light.background} />
-      </TouchableOpacity>
-
       {/* From the Farms - Only show when no category is selected */}
       {!selectedCategory && farmPosts.length > 0 && (
         <View style={styles.section}>
