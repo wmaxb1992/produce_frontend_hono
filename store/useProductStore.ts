@@ -41,10 +41,12 @@ const useProductStore = create<ProductState>((set, get) => ({
   
   fetchProducts: async () => {
     set({ isLoading: true });
+    console.log('Starting to fetch products...');
     
     // Simulate a network request with a timeout
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log('Products fetched successfully');
       
       // After "fetching", set the mock data
       set({ 

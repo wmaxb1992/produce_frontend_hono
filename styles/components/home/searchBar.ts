@@ -8,6 +8,8 @@ export const searchBarStyles = StyleSheet.create({
     borderRadius: 8,
     marginTop: 0,
     marginBottom: 0,
+
+
     borderBottomLeftRadius: 18,
     borderBottomRightRadius: 18,
     borderWidth: 1,

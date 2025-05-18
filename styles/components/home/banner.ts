@@ -15,6 +15,7 @@ export const bannerStyles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 2,
+    position: 'relative',
   },
   background: {
     width: '100%',
@@ -27,6 +28,7 @@ export const bannerStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
+    zIndex: 1,
   },
   textContent: {
     flex: 1,
@@ -53,6 +55,7 @@ export const bannerStyles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
+    zIndex: 2,
   },
   buttonText: {
     color: '#000',

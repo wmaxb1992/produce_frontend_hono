@@ -21,6 +21,11 @@ export const Skeleton = ({
   const themeColors = theme?.colors || defaultColors.light;
   const styles = createStyles(themeColors);
   
+  // Log when Skeleton is rendered
+  useEffect(() => {
+    console.log('Skeleton rendered with props:', { width, height, borderRadius });
+  }, []);
+  
   const translateX = useRef(new Animated.Value(-300)).current;
   
   useEffect(() => {

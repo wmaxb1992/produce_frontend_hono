@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, FlatList, Image, Animated, StyleSheet, Easing, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Filter, Plus, Minus, Grid, List, ArrowUp } from 'lucide-react-native';
+import { Filter, Plus, Minus, Grid, List, ArrowUp, Home } from 'lucide-react-native';
+import { BlurView } from 'expo-blur';
 import useThemeStore from '@/store/useThemeStore';
 import useProductStore from '@/store/useProductStore';
 import useFarmStore from '@/store/useFarmStore';
@@ -205,12 +206,16 @@ interface HomeScreenProps {}
 
 const HomeScreen: React.FC<HomeScreenProps> = () => {
   const router = useRouter();
-  const { theme } = useThemeStore();
+  const { theme, themeType } = useThemeStore();
   const themeColors = theme?.colors || defaultColors.light;
+  const isDark = themeType === 'dark';
   const floatingAnim = useRef(new Animated.Value(0)).current;
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef<ScrollView>(null);
   const [isAddressVisible, setIsAddressVisible] = useState(true);
+  
+  // Add loading state to force skeleton to show for a minimum time
+  const [isLocalLoading, setIsLocalLoading] = useState(true);
   
   // Get data and loading states from stores
   const { 
@@ -228,12 +233,29 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
   } = useFarmStore();
 
   // Check if everything is loading
-  const isLoading = isProductsLoading || isFarmsLoading;
+  const isLoading = isProductsLoading || isFarmsLoading || isLocalLoading;
+
+  // Log loading states for debugging
+  useEffect(() => {
+    console.log('Loading states:', { 
+      isProductsLoading, 
+      isFarmsLoading, 
+      isLocalLoading, 
+      isLoading 
+    });
+  }, [isProductsLoading, isFarmsLoading, isLocalLoading, isLoading]);
 
   // Fetch data on mount
   useEffect(() => {
     fetchProducts();
     fetchFarmData();
+    
+    // Force the loading state to show for at least 2 seconds
+    const timer = setTimeout(() => {
+      setIsLocalLoading(false);
+    }, 2000);
+    
+    return () => clearTimeout(timer);
   }, [fetchProducts, fetchFarmData]);
 
   // Create floating animation
@@ -738,12 +760,14 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
         )}
       </ScrollView>
 
-      {/* Floating Home Button */}
+      {/* Floating Home Button at the bottom */}
       <Animated.View style={[
         homeStyles.floatingHomeButton, 
         animatedStyle
       ]}>
+        <BlurView intensity={30} tint={isDark ? "dark" : "light"} style={homeStyles.blurContainer} />
         <TouchableOpacity
+          style={homeStyles.buttonContent}
           onPress={() => {
             // Scroll to top and reset scroll position
             scrollViewRef.current?.scrollTo({ y: 0, animated: true });
@@ -752,6 +776,25 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
           <ArrowUp size={20} color={themeColors.white} />
         </TouchableOpacity>
       </Animated.View>
+
+      {/* Floating Home Button in top right that stays fixed */}
+      <View style={[
+        homeStyles.floatingTopRightButton
+      ]}>
+        <BlurView intensity={30} tint={isDark ? "dark" : "light"} style={homeStyles.blurContainer} />
+        <TouchableOpacity 
+          style={[
+            homeStyles.buttonContent, 
+            { backgroundColor: themeColors.primary }
+          ]}
+          onPress={() => {
+            // Navigate to home or perform other action
+            router.push('/');
+          }}
+        >
+          <Home size={20} color={themeColors.white} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

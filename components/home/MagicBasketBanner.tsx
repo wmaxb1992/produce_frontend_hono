@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Image, View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { bannerStyles } from '@/styles/components/home/banner';
+import BorderBeam from '@/components/ui/BorderBeam';
 
 const MagicBasketBanner: React.FC = () => {
   const router = useRouter();
@@ -27,6 +28,30 @@ const MagicBasketBanner: React.FC = () => {
           <Text style={bannerStyles.buttonText}>Try Now</Text>
         </View>
       </View>
+      
+      <BorderBeam 
+        duration={8}
+        size={300}
+        color="#FF4500"
+        thickness={3}
+        opacity={0.6}
+      />
+      <BorderBeam 
+        duration={6}
+        delay={2}
+        size={280}
+        color="#1E90FF"
+        thickness={2}
+        opacity={0.5}
+      />
+      <BorderBeam 
+        duration={10}
+        delay={1}
+        size={320}
+        color="#9932CC"
+        thickness={1.5}
+        opacity={0.4}
+      />
     </TouchableOpacity>
   );
 };

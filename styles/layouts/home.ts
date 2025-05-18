@@ -203,6 +203,23 @@ export const homeStyles = StyleSheet.create({
     position: 'absolute',
     right: padding.md,
     bottom: margin.md,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden', // Important for blur to work properly
+    zIndex: 1000,
+  },
+  blurContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 28,
+  },
+  buttonContent: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -217,6 +234,17 @@ export const homeStyles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
-    zIndex: 1000,
+  },
+  floatingTopRightButton: {
+    position: 'absolute',
+    top: 50,  // Increased to avoid status bar
+    right: padding.md,
+    width: 51,
+    height: 51,
+    borderRadius: 25.5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden', // Important for blur to work properly
+    zIndex: 9999,  // Higher z-index to ensure it's above everything
   },
 });

@@ -28,10 +28,12 @@ const useFarmStore = create<FarmState>((set, get) => ({
   
   fetchFarmData: async () => {
     set({ isLoading: true });
+    console.log('Starting to fetch farm data...');
     
     // Simulate a network request with a timeout
     try {
       await new Promise(resolve => setTimeout(resolve, 1200));
+      console.log('Farm data fetched successfully');
       
       // After "fetching", set the mock data
       set({ 
