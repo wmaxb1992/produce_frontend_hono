@@ -2,8 +2,8 @@ import { StyleSheet } from 'react-native';
 
 export const bannerStyles = StyleSheet.create({
   container: {
-    marginHorizontal: 24,
-    marginBottom: 12,
+    marginHorizontal: 0,
+    marginBottom: 0,
     borderRadius: 12,
     overflow: 'hidden',
     height: 130,
@@ -16,6 +16,8 @@ export const bannerStyles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     position: 'relative',
+    width: '90%',
+    zIndex: 5,
   },
   background: {
     width: '100%',
