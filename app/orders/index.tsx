@@ -12,8 +12,8 @@ import { ShoppingBag, Filter, ChevronDown } from 'lucide-react-native';
 
 import useThemeStore from '@/store/useThemeStore';
 import useUserStore from '@/store/useUserStore';
+import useOrderStore from '@/store/useOrderStore';
 import OrderCard, { Order } from '@/components/user/OrderCard';
-import { mockOrders } from '@/mocks/orderData';
 
 // Order status filter options
 const STATUS_FILTERS = [
@@ -35,6 +35,9 @@ export default function OrdersScreen() {
   // Get user data
   const { user } = useUserStore();
   
+  // Get orders from the order store
+  const { getOrdersByUserId } = useOrderStore();
+  
   // State
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -47,10 +50,14 @@ export default function OrdersScreen() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        // In a real app, you would fetch orders from an API
-        // For now, we'll use mock data
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
-        setOrders(mockOrders);
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Get user orders from the store
+        if (user) {
+          const userOrders = getOrdersByUserId(user.id);
+          setOrders(userOrders);
+        }
       } catch (error) {
         console.error('Error fetching orders:', error);
       } finally {
@@ -59,7 +66,7 @@ export default function OrdersScreen() {
     };
     
     fetchOrders();
-  }, []);
+  }, [user, getOrdersByUserId]);
   
   // Apply filters and sorting
   useEffect(() => {

@@ -236,6 +236,13 @@ export interface CartItem {
   farmId: string;
   farmName: string;
   unit: string;
+  type?: 'product' | 'subscription'; // Type of item
+  metadata?: {
+    frequency?: 'weekly' | 'monthly';
+    deliveryDay?: string;
+    bundleId?: string;
+    [key: string]: any; // Allow for other metadata
+  };
 }
 
 export interface Cart {

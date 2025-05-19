@@ -208,7 +208,20 @@ interface HomeScreenProps {}
 
 const HomeScreen: React.FC<HomeScreenProps> = () => {
   const router = useRouter();
-  const { theme, themeType } = useThemeStore();
+  // Temporary fix to avoid hooks error - use default values first
+  let theme: any, themeType: string;
+  let themeStore;
+  
+  try {
+    themeStore = useThemeStore();
+    theme = themeStore?.theme;
+    themeType = themeStore?.themeType;
+  } catch (error) {
+    console.warn("Error using theme store:", error);
+    theme = null;
+    themeType = 'light';
+  }
+  
   const themeColors = theme?.colors || defaultColors.light;
   const isDark = themeType === 'dark';
   const floatingAnim = useRef(new Animated.Value(0)).current;
@@ -220,19 +233,37 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
   const [isLocalLoading, setIsLocalLoading] = useState(true);
   
   // Get data and loading states from stores
-  const { 
-    products,
-    categories,
-    isLoading: isProductsLoading,
-    fetchProducts
-  } = useProductStore();
+  let products: Product[] = [];
+  let categories: Category[] = [];
+  let isProductsLoading = false;
+  let fetchProducts: () => Promise<{products: Product[]; categories: Category[]}> = 
+    () => Promise.resolve({products: [], categories: []});
   
-  const {
-    farms,
-    farmPosts,
-    isLoading: isFarmsLoading,
-    fetchFarmData
-  } = useFarmStore();
+  let farms: Farm[] = [];
+  let farmPosts: FarmPost[] = [];
+  let isFarmsLoading = false;
+  let fetchFarmData: () => Promise<{farms: Farm[]; farmPosts: FarmPost[]}> = 
+    () => Promise.resolve({farms: [], farmPosts: []});
+  
+  try {
+    const productStore = useProductStore();
+    products = productStore.products;
+    categories = productStore.categories;
+    isProductsLoading = productStore.isLoading;
+    fetchProducts = productStore.fetchProducts;
+  } catch (error) {
+    console.warn("Error using product store:", error);
+  }
+  
+  try {
+    const farmStore = useFarmStore();
+    farms = farmStore.farms;
+    farmPosts = farmStore.farmPosts;
+    isFarmsLoading = farmStore.isLoading;
+    fetchFarmData = farmStore.fetchFarmData;
+  } catch (error) {
+    console.warn("Error using farm store:", error);
+  }
 
   // Check if everything is loading
   const isLoading = isProductsLoading || isFarmsLoading || isLocalLoading;
@@ -249,12 +280,24 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
 
   // Fetch data on mount
   useEffect(() => {
-    fetchProducts();
-    fetchFarmData();
+    // Only attempt to fetch data if the functions exist
+    if (typeof fetchProducts === 'function') {
+      fetchProducts().catch(err => console.error("Error fetching products:", err));
+    }
+    
+    if (typeof fetchFarmData === 'function') {
+      fetchFarmData().catch(err => console.error("Error fetching farm data:", err));
+    }
     
     // Fetch subscription bundles
-    const subscriptionStore = useSubscriptionStore();
-    subscriptionStore.fetchBundles();
+    try {
+      const subscriptionStore = useSubscriptionStore();
+      if (subscriptionStore && typeof subscriptionStore.fetchBundles === 'function') {
+        subscriptionStore.fetchBundles().catch(err => console.error("Error fetching bundles:", err));
+      }
+    } catch (error) {
+      console.warn("Error using subscription store:", error);
+    }
     
     // Force loading state for a minimum time to ensure skeleton is visible
     const timer = setTimeout(() => {

@@ -12,7 +12,7 @@ interface ProductState {
   isLoading: boolean;
   
   // Actions
-  fetchProducts: () => Promise<void>;
+  fetchProducts: () => Promise<{ products: Product[]; categories: Category[] }>;
   setSelectedCategory: (categoryId: string | null) => void;
   setSelectedSubcategory: (subcategoryId: string | null) => void;
   setSelectedVariety: (varietyId: string | null) => void;
@@ -45,19 +45,40 @@ const useProductStore = create<ProductState>((set, get) => ({
     
     // Simulate a network request with a timeout
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      console.log('Products fetched successfully');
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      // After "fetching", set the mock data
+      // Pre-process the data before setting it in the state
+      // This ensures everything is ready when isLoading becomes false
+      const processedProducts = [...mockProducts];
+      const processedCategories = [...mockCategories];
+      
+      // In a real app, you might do additional processing here
+      // such as data normalization, computing derived properties, etc.
+      
+      console.log('Products processed and ready to display');
+      
+      // After processing, update the state all at once
       set({ 
-        products: mockProducts,
-        categories: mockCategories,
-        filteredProducts: mockProducts,
-        isLoading: false
+        products: processedProducts,
+        categories: processedCategories,
+        filteredProducts: processedProducts,
+        isLoading: false // Only set to false after everything is ready
       });
+      
+      // Return the processed data for immediate use
+      return {
+        products: processedProducts,
+        categories: processedCategories
+      };
     } catch (error) {
       console.error('Error fetching products:', error);
       set({ isLoading: false });
+      // Return empty arrays in case of error
+      return {
+        products: [],
+        categories: []
+      };
     }
   },
   

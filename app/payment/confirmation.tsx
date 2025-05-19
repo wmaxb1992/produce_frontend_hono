@@ -7,7 +7,7 @@ import {
   TouchableOpacity 
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { CheckCircle, Home, Package, Clock } from 'lucide-react-native';
+import { CheckCircle, Home, Package, Clock, ShoppingBag } from 'lucide-react-native';
 
 import useThemeStore from '@/store/useThemeStore';
 import Button from '@/components/ui/Button';
@@ -161,13 +161,26 @@ export default function OrderConfirmationScreen() {
           <Button
             variant="outline"
             onPress={() => router.push(`/orders/${orderId}`)}
-            style={[styles.actionButton, { marginTop: 12 }]}
+            style={styles.actionButton}
           >
             <Package size={18} color={colors.primary} style={{ marginRight: 8 }} />
             <Text style={[styles.outlineButtonText, { color: colors.primary }]}>
               Track Order
             </Text>
           </Button>
+          
+          <View style={{ marginTop: 12 }}>
+            <Button
+              variant="outline"
+              onPress={() => router.push('/orders')}
+              style={styles.actionButton}
+            >
+              <ShoppingBag size={18} color={colors.primary} style={{ marginRight: 8 }} />
+              <Text style={[styles.outlineButtonText, { color: colors.primary }]}>
+                View All Orders
+              </Text>
+            </Button>
+          </View>
         </View>
       </ScrollView>
     </>

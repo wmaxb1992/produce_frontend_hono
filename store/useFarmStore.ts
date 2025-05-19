@@ -10,7 +10,7 @@ interface FarmState {
   isLoading: boolean;
   
   // Actions
-  fetchFarmData: () => Promise<void>;
+  fetchFarmData: () => Promise<{ farms: Farm[]; farmPosts: FarmPost[] }>;
   getFarmById: (id: string) => Farm | undefined;
   getFarmsByDeliveryArea: (zipCode: string) => Farm[];
   getPostsByFarmId: (farmId: string) => FarmPost[];
@@ -32,18 +32,38 @@ const useFarmStore = create<FarmState>((set, get) => ({
     
     // Simulate a network request with a timeout
     try {
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      console.log('Farm data fetched successfully');
+      // Shorter network delay for faster loading
+      await new Promise(resolve => setTimeout(resolve, 800));
       
-      // After "fetching", set the mock data
+      // Pre-process the data before setting it in the state
+      const processedFarms = [...mockFarms];
+      const processedPosts = [...mockFarmPosts];
+      
+      // In a real app, you might do additional processing here
+      
+      console.log('Farm data processed and ready to display');
+      
+      // After processing, update the state all at once
       set({ 
-        farms: mockFarms,
-        farmPosts: mockFarmPosts,
-        isLoading: false
+        farms: processedFarms,
+        farmPosts: processedPosts,
+        isLoading: false // Only set to false after everything is ready
       });
+      
+      // Return the processed data for immediate use
+      return {
+        farms: processedFarms,
+        farmPosts: processedPosts
+      };
     } catch (error) {
       console.error('Error fetching farm data:', error);
       set({ isLoading: false });
+      
+      // Return empty arrays in case of error
+      return {
+        farms: [],
+        farmPosts: []
+      };
     }
   },
   

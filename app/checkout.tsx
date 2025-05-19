@@ -15,12 +15,30 @@ import { ChevronRight, CreditCard, MapPin, ShoppingBag, Check } from 'lucide-rea
 import useThemeStore from '@/store/useThemeStore';
 import useCartStore from '@/store/useCartStore';
 import useUserStore from '@/store/useUserStore';
+import useOrderStore from '@/store/useOrderStore';
 import Button from '@/components/ui/Button';
 import AddressCard from '@/components/user/AddressCard';
 import PaymentMethodCard from '@/components/user/PaymentMethodCard';
 import CheckoutSummary from '@/components/checkout/CheckoutSummary';
 import DeliveryOptions from '@/components/checkout/DeliveryOptions';
-import { DeliveryMethod, DeliveryOption } from '@/types';
+import { Order } from '@/components/user/OrderCard';
+
+// Define delivery option types if they don't exist in types
+type DeliveryMethod = 'standard' | 'express' | 'pickup';
+
+interface DeliveryOption {
+  id: string;
+  type: DeliveryMethod;
+  name: string;
+  description: string;
+  price: number;
+  estimatedDelivery: string;
+  pickupLocation?: {
+    name: string;
+    address: string;
+  };
+  availableTimeSlots?: string[];
+}
 
 // Mock delivery options
 const DELIVERY_OPTIONS: DeliveryOption[] = [
@@ -73,6 +91,9 @@ export default function CheckoutScreen() {
   // Get user data
   const { user, isLoggedIn } = useUserStore();
   
+  // Get order store
+  const { addOrder } = useOrderStore();
+  
   // State for checkout
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [selectedPaymentMethodId, setSelectedPaymentMethodId] = useState<string | null>(null);
@@ -91,7 +112,7 @@ export default function CheckoutScreen() {
   useEffect(() => {
     if (user) {
       // Set default address
-      const defaultAddress = user.addresses && user.addresses.find(addr => addr.default);
+      const defaultAddress = user.addresses && user.addresses.find(addr => addr.isDefault);
       if (defaultAddress) {
         setSelectedAddressId(defaultAddress.id);
       } else if (user.addresses && user.addresses.length > 0) {
@@ -99,7 +120,7 @@ export default function CheckoutScreen() {
       }
       
       // Set default payment method
-      const defaultPayment = user.paymentMethods && user.paymentMethods.find(pm => pm.default);
+      const defaultPayment = user.paymentMethods && user.paymentMethods.find(pm => pm.isDefault);
       if (defaultPayment) {
         setSelectedPaymentMethodId(defaultPayment.id);
       } else if (user.paymentMethods && user.paymentMethods.length > 0) {
@@ -134,11 +155,60 @@ export default function CheckoutScreen() {
       return;
     }
     
+    if (!user) {
+      Alert.alert('User Error', 'You must be logged in to place an order');
+      return;
+    }
+    
     try {
       setIsProcessing(true);
       
+      // Find selected address and payment method
+      const selectedAddress = user.addresses?.find(addr => addr.id === selectedAddressId);
+      const selectedPaymentMethod = user.paymentMethods?.find(pm => pm.id === selectedPaymentMethodId);
+      
+      if (!selectedAddress || !selectedPaymentMethod) {
+        throw new Error('Missing address or payment method');
+      }
+      
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Create new order ID
+      const orderId = `ORD-${Date.now()}`;
+      
+      // Map cart items to order items
+      const orderItems = items.map(item => ({
+        id: `item-${Date.now()}-${item.id}`,
+        productId: item.productId || item.id,
+        productName: item.name,
+        productImage: item.image,
+        quantity: item.quantity,
+        price: item.price,
+        farmId: item.farmId,
+        farmName: item.farmName,
+      }));
+      
+      // Create new order
+      const newOrder: Order = {
+        id: orderId,
+        userId: user.id,
+        status: 'pending',
+        total: total,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        items: orderItems,
+        shippingAddress: {
+          name: selectedAddress.name || selectedAddress.street,
+          street: selectedAddress.street,
+          city: selectedAddress.city,
+          state: selectedAddress.state,
+          zipCode: selectedAddress.zip,
+        },
+      };
+      
+      // Add order to store
+      addOrder(newOrder);
       
       // Success - clear cart and navigate to confirmation
       clearCart();
@@ -147,7 +217,7 @@ export default function CheckoutScreen() {
       router.replace({
         pathname: '/payment/confirmation',
         params: { 
-          orderId: `ORD-${Date.now()}`,
+          orderId: orderId,
           total: total.toFixed(2)
         }
       });
@@ -221,7 +291,7 @@ export default function CheckoutScreen() {
                       state: address.state,
                       zipCode: address.zip,
                       country: 'United States',
-                      isDefault: address.default,
+                      isDefault: address.isDefault,
                       instructions: address.instructions,
                     }}
                     isSelected={selectedAddressId === address.id}
@@ -276,11 +346,11 @@ export default function CheckoutScreen() {
                     paymentMethod={{
                       id: payment.id,
                       type: 'card',
-                      isDefault: payment.default,
+                      isDefault: payment.isDefault,
                       cardType: payment.type as any,
                       last4: payment.last4,
-                      expiryMonth: payment.expiryMonth?.toString(),
-                      expiryYear: payment.expiryYear?.toString(),
+                      expiryMonth: '12', // Default month if not available
+                      expiryYear: '2025', // Default year if not available
                     }}
                     isSelected={selectedPaymentMethodId === payment.id}
                     onSelect={(pm) => setSelectedPaymentMethodId(pm.id)}

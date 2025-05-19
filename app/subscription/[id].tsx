@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, Modal, FlatList, Alert } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Leaf, Apple, Flower2, Calendar, Clock, Check, Info, ShoppingBag } from 'lucide-react-native';
+import { ChevronLeft, Leaf, Apple, Flower2, Calendar, Clock, Check, Info, ShoppingBag, X, ChevronRight, Dot } from 'lucide-react-native';
 import useThemeStore from '@/store/useThemeStore';
 import useSubscriptionStore from '@/store/useSubscriptionStore';
 import useCartStore from '@/store/useCartStore';
@@ -22,6 +22,15 @@ export default function SubscriptionDetailScreen() {
   const [bundle, setBundle] = useState<SubscriptionBundle | null>(null);
   const [frequency, setFrequency] = useState<'weekly' | 'monthly'>('weekly');
   const [deliveryDay, setDeliveryDay] = useState<string>('Wednesday');
+  const [showModal, setShowModal] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showExpandedImage, setShowExpandedImage] = useState(false);
+  const [mockImages, setMockImages] = useState<string[]>([]);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  
+  const modalAnim = useRef(new Animated.Value(0)).current;
+  const successAnim = useRef(new Animated.Value(0)).current;
   
   // Find the bundle based on the id
   useEffect(() => {
@@ -33,12 +42,73 @@ export default function SubscriptionDetailScreen() {
     }
   }, [id, bundles]);
   
+  // Generate mock images based on bundle image
+  useEffect(() => {
+    if (bundle?.image) {
+      // In a real app, we would fetch actual images from the API
+      // For demo, we're using the same image multiple times
+      setMockImages([
+        bundle.image,
+        bundle.image, // In real app, these would be different images
+        bundle.image,
+        bundle.image
+      ]);
+    }
+  }, [bundle]);
+  
+  useEffect(() => {
+    if (showModal) {
+      Animated.timing(modalAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(modalAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [showModal, modalAnim]);
+  
+  // For success toast animation
+  useEffect(() => {
+    if (showSuccess) {
+      Animated.sequence([
+        Animated.timing(successAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.delay(4000),
+        Animated.timing(successAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        })
+      ]).start(() => {
+        setShowSuccess(false);
+      });
+    }
+  }, [showSuccess, successAnim]);
+  
   const handleGoBack = () => {
     router.back();
   };
   
+  const handleOpenSubscribeModal = () => {
+    setShowModal(true);
+  };
+  
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+  
   const handleSubscribe = () => {
     if (bundle) {
+      setIsAddingToCart(true);
+      
       // Add the subscription bundle to cart
       addItem({
         id: bundle.id,
@@ -54,9 +124,21 @@ export default function SubscriptionDetailScreen() {
         }
       }, 1);
       
-      // Navigate to checkout
-      router.push('/checkout');
+      // Show success animation
+      setTimeout(() => {
+        setIsAddingToCart(false);
+        setShowModal(false);
+        setShowSuccess(true);
+      }, 500);
     }
+  };
+  
+  const handleImagePress = () => {
+    setShowExpandedImage(true);
+  };
+  
+  const handleCloseExpandedImage = () => {
+    setShowExpandedImage(false);
   };
   
   if (!bundle) {
@@ -71,6 +153,43 @@ export default function SubscriptionDetailScreen() {
   const regularPrice = bundle.price;
   const savings = regularPrice - price;
   const savingsPercentage = Math.round((savings / regularPrice) * 100);
+  
+  // Modal transform based on animation
+  const modalTranslateY = modalAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [500, 0]
+  });
+  
+  // Background opacity for overlay
+  const overlayOpacity = modalAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 0.5]
+  });
+  
+  // Success toast animation values
+  const successOpacity = successAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 1]
+  });
+  
+  const successTranslateY = successAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-50, 0]
+  });
+  
+  const renderCarouselItem = ({ item, index }: { item: string; index: number }) => (
+    <TouchableOpacity 
+      activeOpacity={0.9} 
+      onPress={handleImagePress}
+      style={styles.carouselItemContainer}
+    >
+      <Image 
+        source={{ uri: item }}
+        style={styles.carouselImage}
+        resizeMode="cover"
+      />
+    </TouchableOpacity>
+  );
   
   return (
     <>
@@ -95,13 +214,92 @@ export default function SubscriptionDetailScreen() {
           contentContainerStyle={styles.scrollContent}
         >
           <View style={styles.imageContainer}>
-            <Image 
-              source={{ uri: bundle.image }}
-              style={styles.image}
-              resizeMode="cover"
-            />
+            {mockImages.length > 0 && (
+              <>
+                <FlatList
+                  data={mockImages}
+                  renderItem={renderCarouselItem}
+                  keyExtractor={(_, index) => index.toString()}
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  onMomentumScrollEnd={(event) => {
+                    const slideIndex = Math.round(
+                      event.nativeEvent.contentOffset.x / width
+                    );
+                    setCurrentImageIndex(slideIndex);
+                  }}
+                />
+              </>
+            )}
+            
             <View style={[styles.discountBadge, { backgroundColor: colors.primary }]}>
               <Text style={styles.discountText}>Save {bundle.discountPercentage}%</Text>
+            </View>
+            
+            {/* Floating stats container */}
+            <View style={[styles.statsContainer]}>
+              {[
+                { 
+                  count: bundle.items.vegetables, 
+                  label: 'Veg', 
+                  icon: <Leaf size={14} color="white" />,
+                  color: colors.success + 'CC',
+                  key: 'vegetables'
+                },
+                { 
+                  count: bundle.items.fruits, 
+                  label: 'Fruit', 
+                  icon: <Apple size={14} color="white" />,
+                  color: colors.warning + 'CC',
+                  key: 'fruits'
+                },
+                { 
+                  count: bundle.items.herbs, 
+                  label: 'Herbs', 
+                  icon: <Flower2 size={14} color="white" />,
+                  color: colors.info + 'CC',
+                  key: 'herbs'
+                }
+              ]
+              .sort((a, b) => b.count - a.count)
+              .map(item => (
+                <View 
+                  key={item.key}
+                  style={[
+                    styles.statItem, 
+                    { 
+                      backgroundColor: item.count > 0 ? item.color : colors.gray[500] + 'CC'
+                    }
+                  ]}
+                >
+                  {React.cloneElement(item.icon, { 
+                    color: "white" 
+                  })}
+                  <Text style={[
+                    styles.statValue, 
+                    { 
+                      color: "white",
+                      textShadowColor: 'rgba(0, 0, 0, 0.3)',
+                      textShadowOffset: { width: 0, height: 1 },
+                      textShadowRadius: 1
+                    }
+                  ]}>
+                    {item.count}
+                  </Text>
+                  <Text style={[
+                    styles.statLabel, 
+                    { 
+                      color: "white",
+                      textShadowColor: 'rgba(0, 0, 0, 0.3)',
+                      textShadowOffset: { width: 0, height: 1 },
+                      textShadowRadius: 1
+                    }
+                  ]}>
+                    {item.label}
+                  </Text>
+                </View>
+              ))}
             </View>
           </View>
           
@@ -118,105 +316,6 @@ export default function SubscriptionDetailScreen() {
               {bundle.description}
             </Text>
             
-            <View style={styles.statsContainer}>
-              <View style={[styles.statItem, { backgroundColor: colors.success + '10' }]}>
-                <Leaf size={18} color={colors.success} />
-                <Text style={[styles.statValue, { color: colors.text }]}>
-                  {bundle.items.vegetables}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.subtext }]}>
-                  Vegetables
-                </Text>
-              </View>
-              
-              <View style={[styles.statItem, { backgroundColor: colors.warning + '10' }]}>
-                <Apple size={18} color={colors.warning} />
-                <Text style={[styles.statValue, { color: colors.text }]}>
-                  {bundle.items.fruits}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.subtext }]}>
-                  Fruits
-                </Text>
-              </View>
-              
-              <View style={[styles.statItem, { backgroundColor: colors.info + '10' }]}>
-                <Flower2 size={18} color={colors.info} />
-                <Text style={[styles.statValue, { color: colors.text }]}>
-                  {bundle.items.herbs}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.subtext }]}>
-                  Herbs
-                </Text>
-              </View>
-            </View>
-            
-            <View style={[styles.section, styles.subscriptionSection]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Subscription Options
-              </Text>
-              
-              <View style={styles.optionContainer}>
-                <Text style={[styles.optionLabel, { color: colors.text }]}>
-                  Delivery Frequency
-                </Text>
-                
-                <SegmentedControl
-                  options={[
-                    { label: 'Weekly', value: 'weekly' },
-                    { label: 'Monthly', value: 'monthly' }
-                  ]}
-                  selectedValue={frequency}
-                  onChange={(value: string) => setFrequency(value as 'weekly' | 'monthly')}
-                  style={{ marginTop: 8 }}
-                />
-              </View>
-              
-              <View style={styles.optionContainer}>
-                <Text style={[styles.optionLabel, { color: colors.text }]}>
-                  Delivery Day
-                </Text>
-                
-                <View style={styles.radioGroup}>
-                  {['Monday', 'Wednesday', 'Friday'].map((day) => (
-                    <RadioButton
-                      key={day}
-                      label={day}
-                      selected={deliveryDay === day}
-                      onSelect={() => setDeliveryDay(day)}
-                    />
-                  ))}
-                </View>
-              </View>
-              
-              <View style={[styles.pricingCard, { backgroundColor: colors.card }]}>
-                <View style={styles.pricingRow}>
-                  <View style={styles.priceContainer}>
-                    <Text style={[styles.priceLabel, { color: colors.subtext }]}>
-                      {frequency === 'weekly' ? 'Weekly Price' : 'Monthly Price'}
-                    </Text>
-                    <Text style={[styles.price, { color: colors.text }]}>
-                      ${price.toFixed(2)}
-                    </Text>
-                  </View>
-                  
-                  <View style={styles.savingsContainer}>
-                    <Text style={[styles.savingsLabel, { color: colors.subtext }]}>
-                      Regular Price
-                    </Text>
-                    <Text style={[styles.regularPrice, { color: colors.error }]}>
-                      ${regularPrice.toFixed(2)}
-                    </Text>
-                  </View>
-                </View>
-                
-                <View style={[styles.savingsBadge, { backgroundColor: colors.success + '20' }]}>
-                  <Text style={[styles.savingsText, { color: colors.success }]}>
-                    You save ${savings.toFixed(2)} ({savingsPercentage}%)
-                  </Text>
-                </View>
-              </View>
-            </View>
-            
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>
                 What's Included
@@ -226,7 +325,7 @@ export default function SubscriptionDetailScreen() {
                 <View style={styles.infoRow}>
                   <Calendar size={18} color={colors.primary} style={styles.infoIcon} />
                   <Text style={[styles.infoText, { color: colors.text }]}>
-                    {frequency === 'weekly' ? 'Weekly' : 'Monthly'} delivery on {deliveryDay}s
+                    Flexible delivery schedule options
                   </Text>
                 </View>
                 
@@ -285,12 +384,163 @@ export default function SubscriptionDetailScreen() {
           </View>
           
           <RoundButton 
-            onPress={handleSubscribe}
+            onPress={handleOpenSubscribeModal}
             label="Subscribe Now"
             icon={<ShoppingBag size={18} color="white" />}
             style={{ flex: 1 }}
           />
         </View>
+        
+        {/* Modal Overlay */}
+        {showModal && (
+          <Animated.View 
+            style={[
+              styles.overlay,
+              { backgroundColor: colors.black, opacity: overlayOpacity }
+            ]}
+          >
+            <TouchableOpacity 
+              style={styles.overlayTouchable}
+              onPress={handleCloseModal}
+              activeOpacity={1}
+            />
+          </Animated.View>
+        )}
+        
+        {/* Success Notification */}
+        <Animated.View 
+          style={[
+            styles.successToast, 
+            { 
+              backgroundColor: colors.success,
+              opacity: successOpacity,
+              transform: [{ translateY: successTranslateY }]
+            }
+          ]}
+          pointerEvents="box-none"
+        >
+          <TouchableOpacity 
+            style={styles.successTouchable}
+            onPress={() => router.push('/cart')}
+            activeOpacity={0.8}
+          >
+            <ShoppingBag size={20} color="white" style={{ marginRight: 8 }} />
+            <Text style={styles.successText}>Added to cart!</Text>
+            <ChevronRight size={16} color="white" style={{ marginLeft: 8, opacity: 0.8 }} />
+          </TouchableOpacity>
+        </Animated.View>
+        
+        {/* Subscription Options Modal */}
+        <Animated.View 
+          style={[
+            styles.modal,
+            { 
+              backgroundColor: colors.card,
+              transform: [{ translateY: modalTranslateY }]
+            }
+          ]}
+        >
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>
+              Subscription Options
+            </Text>
+            <TouchableOpacity onPress={handleCloseModal}>
+              <X size={24} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.optionContainer}>
+            <Text style={[styles.optionLabel, { color: colors.text }]}>
+              Delivery Frequency
+            </Text>
+            
+            <SegmentedControl
+              options={[
+                { label: 'Weekly', value: 'weekly' },
+                { label: 'Monthly', value: 'monthly' }
+              ]}
+              selectedValue={frequency}
+              onChange={(value: string) => setFrequency(value as 'weekly' | 'monthly')}
+              style={{ marginTop: 8 }}
+            />
+          </View>
+          
+          <View style={styles.optionContainer}>
+            <Text style={[styles.optionLabel, { color: colors.text }]}>
+              Delivery Day
+            </Text>
+            
+            <View style={styles.radioGroup}>
+              {['Monday', 'Wednesday', 'Friday'].map((day) => (
+                <RadioButton
+                  key={day}
+                  label={day}
+                  selected={deliveryDay === day}
+                  onSelect={() => setDeliveryDay(day)}
+                />
+              ))}
+            </View>
+          </View>
+          
+          <View style={[styles.pricingCard, { backgroundColor: colors.background }]}>
+            <View style={styles.pricingRow}>
+              <View style={styles.priceContainer}>
+                <Text style={[styles.priceLabel, { color: colors.subtext }]}>
+                  {frequency === 'weekly' ? 'Weekly Price' : 'Monthly Price'}
+                </Text>
+                <Text style={[styles.price, { color: colors.text }]}>
+                  ${price.toFixed(2)}
+                </Text>
+              </View>
+              
+              <View style={styles.savingsContainer}>
+                <Text style={[styles.savingsLabel, { color: colors.subtext }]}>
+                  Regular Price
+                </Text>
+                <Text style={[styles.regularPrice, { color: colors.error }]}>
+                  ${regularPrice.toFixed(2)}
+                </Text>
+              </View>
+            </View>
+            
+            <View style={[styles.savingsBadge, { backgroundColor: colors.success + '20' }]}>
+              <Text style={[styles.savingsText, { color: colors.success }]}>
+                You save ${savings.toFixed(2)} ({savingsPercentage}%)
+              </Text>
+            </View>
+          </View>
+          
+          <RoundButton 
+            onPress={handleSubscribe}
+            label={isAddingToCart ? "Adding..." : "Add to Cart"}
+            icon={<ShoppingBag size={18} color="white" />}
+            style={styles.confirmButton}
+            disabled={isAddingToCart}
+          />
+        </Animated.View>
+        
+        {/* Expanded Image Modal */}
+        <Modal
+          visible={showExpandedImage}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={handleCloseExpandedImage}
+        >
+          <View style={styles.expandedImageContainer}>
+            <TouchableOpacity 
+              style={styles.closeExpandedButton}
+              onPress={handleCloseExpandedImage}
+            >
+              <X size={24} color="white" />
+            </TouchableOpacity>
+            
+            <Image
+              source={{ uri: mockImages[currentImageIndex] }}
+              style={styles.expandedImage}
+              resizeMode="contain"
+            />
+          </View>
+        </Modal>
       </View>
     </>
   );
@@ -309,7 +559,7 @@ const ProductRow = ({ name, quantity }: { name: string; quantity: string }) => {
   );
 };
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -347,13 +597,17 @@ const styles = StyleSheet.create({
     height: 250,
     position: 'relative',
   },
-  image: {
+  carouselItemContainer: {
+    width: width,
+    height: 250,
+  },
+  carouselImage: {
     width: '100%',
     height: '100%',
   },
   discountBadge: {
     position: 'absolute',
-    top: 210,
+    top: 50,
     right: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -370,38 +624,47 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: 2,
   },
   farmName: {
     fontSize: 16,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   description: {
     fontSize: 16,
     lineHeight: 24,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 24,
+    position: 'absolute',
+    bottom: 16,
+    left: 16,
+    width: '50%',
+    gap: 4,
   },
   statItem: {
-    width: (width - 48) / 3,
-    paddingVertical: 16,
+    flex: 1,
+    paddingVertical: 6,
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 3,
   },
   statValue: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginVertical: 8,
+    fontSize: 12,
+    fontWeight: '700',
+    marginVertical: 1,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 8,
   },
   section: {
-    marginTop: 24,
+    marginTop: 16,
   },
   subscriptionSection: {
     borderTopWidth: 1,
@@ -526,5 +789,120 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginTop: 100,
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10,
+  },
+  overlayTouchable: {
+    width: '100%',
+    height: '100%',
+  },
+  modal: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: 30,
+    zIndex: 11,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  confirmButton: {
+    marginTop: 20,
+  },
+  indicatorContainer: {
+    position: 'absolute',
+    bottom: 16,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  indicator: {
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 3,
+  },
+  expandedImageContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expandedImage: {
+    width: width,
+    height: height * 0.7,
+  },
+  closeExpandedButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 10,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expandedImageIndicator: {
+    position: 'absolute',
+    bottom: 50,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  successToast: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    marginHorizontal: 40,
+    padding: 12,
+    borderRadius: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  successText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  successTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 4,
   },
 }); 

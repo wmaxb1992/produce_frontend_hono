@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { Minus, Plus, Trash2 } from 'lucide-react-native';
+import { Minus, Plus, Trash2, Calendar, RefreshCw } from 'lucide-react-native';
 import { CartItem as CartItemType } from '@/types';
 import useThemeStore from '@/store/useThemeStore';
 import useCartStore from '@/store/useCartStore';
@@ -33,6 +33,9 @@ const CartItem: React.FC<CartItemProps> = ({ item, cartId }) => {
     removeFromCart(cartId, item.id);
   };
   
+  // Check if this is a subscription item
+  const isSubscription = item.type === 'subscription' && item.metadata;
+  
   return (
     <View style={[styles.container, { borderBottomColor: colors.border }]}>
       <Image 
@@ -53,6 +56,28 @@ const CartItem: React.FC<CartItemProps> = ({ item, cartId }) => {
         <Text style={[styles.price, { color: colors.text }]}>
           ${item.price.toFixed(2)} / {item.unit}
         </Text>
+        
+        {isSubscription && (
+          <View style={[styles.subscriptionInfo, { backgroundColor: colors.primary + '10' }]}>
+            <View style={[styles.subscriptionBadge, { backgroundColor: colors.primary }]}>
+              <Text style={styles.subscriptionBadgeText}>Subscription</Text>
+            </View>
+            
+            <View style={styles.deliveryInfoRow}>
+              <Calendar size={14} color={colors.primary} style={styles.infoIcon} />
+              <Text style={[styles.deliveryInfoText, { color: colors.text }]}>
+                Delivered on {item.metadata.deliveryDay}s
+              </Text>
+            </View>
+            
+            <View style={styles.deliveryInfoRow}>
+              <RefreshCw size={14} color={colors.primary} style={styles.infoIcon} />
+              <Text style={[styles.deliveryInfoText, { color: colors.text }]}>
+                {item.metadata.frequency === 'weekly' ? 'Weekly' : 'Monthly'} delivery
+              </Text>
+            </View>
+          </View>
+        )}
         
         <View style={styles.actions}>
           <View style={[styles.quantityContainer, { borderColor: colors.border }]}>
@@ -155,6 +180,36 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 'auto',
     alignSelf: 'center',
+  },
+  subscriptionInfo: {
+    marginTop: 4,
+    marginBottom: 8,
+    padding: 8,
+    borderRadius: 8,
+  },
+  subscriptionBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+  },
+  subscriptionBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  deliveryInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  infoIcon: {
+    marginRight: 6,
+  },
+  deliveryInfoText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
 
