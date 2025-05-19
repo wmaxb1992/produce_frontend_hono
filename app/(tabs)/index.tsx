@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur';
 import useThemeStore from '@/store/useThemeStore';
 import useProductStore from '@/store/useProductStore';
 import useFarmStore from '@/store/useFarmStore';
+import useSubscriptionStore from '@/store/useSubscriptionStore';
 import defaultColors from '@/constants/colors';
 import type { Category, Subcategory, Variety, Product, Farm, FarmPost } from '@/types';
 import { ScrollView as GestureScrollView } from 'react-native-gesture-handler';
@@ -30,6 +31,7 @@ import CategoriesSection from '@/components/home/CategoriesSection';
 import SubcategoriesSection from '@/components/home/SubcategoriesSection';
 import VarietiesSection from '@/components/home/VarietiesSection';
 import FeaturedFarmsSection from '@/components/home/FeaturedFarmsSection';
+import SubscriptionBundlesSection from '@/components/home/SubscriptionBundlesSection';
 
 // Local styles for components not yet moved to separate style files
 const styles = StyleSheet.create({
@@ -250,13 +252,17 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
     fetchProducts();
     fetchFarmData();
     
-    // Force the loading state to show for at least 2 seconds
+    // Fetch subscription bundles
+    const subscriptionStore = useSubscriptionStore();
+    subscriptionStore.fetchBundles();
+    
+    // Force loading state for a minimum time to ensure skeleton is visible
     const timer = setTimeout(() => {
       setIsLocalLoading(false);
-    }, 2000);
+    }, 1500);
     
     return () => clearTimeout(timer);
-  }, [fetchProducts, fetchFarmData]);
+  }, []);
 
   // Create floating animation
   useEffect(() => {
@@ -757,6 +763,11 @@ const HomeScreen: React.FC<HomeScreenProps> = () => {
               />
             ))}
           </View>
+        )}
+
+        {/* Subscription Bundles - Only show when no category is selected */}
+        {!selectedCategory && (
+          <SubscriptionBundlesSection />
         )}
       </ScrollView>
 

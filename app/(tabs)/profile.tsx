@@ -22,6 +22,7 @@ import {
   Sun,
   Moon,
   LogIn,
+  Calendar,
 } from 'lucide-react-native';
 import useThemeStore from '@/store/useThemeStore';
 import useUserStore from '@/store/useUserStore';
@@ -204,7 +205,10 @@ export default function ProfileScreen() {
       </Text>
       
       <View style={[styles.section, { backgroundColor: colors.card }]}>
-        <TouchableOpacity style={styles.settingRow}>
+        <TouchableOpacity 
+          style={styles.settingRow}
+          onPress={() => router.push('/user/orders')}
+        >
           <View style={styles.settingIconContainer}>
             <ShoppingBag size={20} color={colors.secondary} />
           </View>
@@ -216,12 +220,30 @@ export default function ProfileScreen() {
         
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
         
-        <TouchableOpacity style={styles.settingRow}>
+        <TouchableOpacity 
+          style={styles.settingRow}
+          onPress={() => router.push('/user/favorites')}
+        >
           <View style={styles.settingIconContainer}>
             <Heart size={20} color={colors.secondary} />
           </View>
           <Text style={[styles.settingText, { color: colors.text }]}>
             Favorites
+          </Text>
+          <ChevronRight size={20} color={colors.gray[400]} />
+        </TouchableOpacity>
+        
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
+        
+        <TouchableOpacity 
+          style={styles.settingRow}
+          onPress={() => router.push('/user/subscriptions')}
+        >
+          <View style={styles.settingIconContainer}>
+            <Calendar size={20} color={colors.secondary} />
+          </View>
+          <Text style={[styles.settingText, { color: colors.text }]}>
+            My Subscriptions
           </Text>
           <ChevronRight size={20} color={colors.gray[400]} />
         </TouchableOpacity>

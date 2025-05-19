@@ -263,3 +263,23 @@ export interface Order {
   estimatedDelivery?: string;
   trackingNumber?: string;
 }
+
+// Subscription Types
+export interface SubscriptionBundle {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  price: number;
+  weeklyPrice: number;
+  monthlyPrice: number;
+  discountPercentage: number; // How much is saved compared to buying items individually
+  items: {
+    vegetables: number;
+    fruits: number;
+    herbs: number;
+  };
+  products: string[]; // IDs of products included in the bundle
+  farmId?: string; // Optional: if from a specific farm
+  farmName?: string; // Optional: if from a specific farm
+}
