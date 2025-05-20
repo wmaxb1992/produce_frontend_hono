@@ -24,35 +24,57 @@ import {
   Facebook,
   Twitter,
 } from 'lucide-react-native';
-import useThemeStore from '@/store/useThemeStore';
+import { useTheme } from '@/hooks/useTheme';
 import useFarmStore from '@/store/useFarmStore';
 import useProductStore from '@/store/useProductStore';
 import useUserStore from '@/store/useUserStore';
 import ProductCard from '@/components/product/ProductCard';
 import FarmPostCard from '@/components/farm/FarmPostCard';
 import Button from '@/components/ui/Button';
+import LoadingState from '@/components/ui/LoadingState';
+import ErrorState from '@/components/ui/ErrorState';
 
 const { width } = Dimensions.get('window');
 
 export default function FarmDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  
-  const { getThemeValues } = useThemeStore();
-  const theme = getThemeValues();
-  const { colors } = theme;
+  const { colors } = useTheme();
   
   const { getFarmById, getPostsByFarmId, isFollowingFarm, followFarm, unfollowFarm } = useFarmStore();
   const { getProductsByFarmId } = useProductStore();
   const { user } = useUserStore();
   
   const [activeTab, setActiveTab] = React.useState<'products' | 'about' | 'posts'>('products');
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<Error | null>(null);
   
   const farm = getFarmById(id);
   const farmProducts = farm ? getProductsByFarmId(farm.id) : [];
   const farmPosts = farm ? getPostsByFarmId(farm.id) : [];
   
   const isFollowing = farm ? isFollowingFarm(farm.id) : false;
+  
+  // Show loading state
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <LoadingState message="Loading farm details..." />
+      </View>
+    );
+  }
+  
+  // Show error state
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ErrorState 
+          message="Could not load farm details" 
+          onRetry={() => router.reload()}
+        />
+      </View>
+    );
+  }
   
   if (!farm) {
     return (

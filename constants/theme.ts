@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import colors from './colors';
 
 export type ThemeType = 'light' | 'dark';
+export type SeasonType = 'spring' | 'summer' | 'fall' | 'winter';
 
 export const spacing = {
   xs: 4,
@@ -135,14 +136,39 @@ export const shadows = {
   }),
 };
 
-export const getTheme = (themeType: ThemeType) => {
-  return {
-    colors: colors[themeType],
+// Function to determine current season based on date
+export const getCurrentSeason = (): SeasonType => {
+  const now = new Date();
+  const month = now.getMonth();
+  
+  // Northern hemisphere seasons
+  if (month >= 2 && month <= 4) return 'spring';
+  if (month >= 5 && month <= 7) return 'summer';
+  if (month >= 8 && month <= 10) return 'fall';
+  return 'winter';
+};
+
+export const getTheme = (themeType: ThemeType, season?: SeasonType) => {
+  // Get current season if not provided
+  const currentSeason = season || getCurrentSeason();
+  
+  // Get base theme
+  const baseTheme = {
+    colors: { ...colors[themeType] }, // Create a copy to avoid mutating the original
     spacing,
     fontSizes,
     fontWeights,
     borderRadius,
     shadows: shadows[themeType],
-    themeType, // Include the theme type in the theme object
+    themeType,
+    season: currentSeason,
   };
+  
+  // Apply seasonal accent color if using seasonal theme
+  if (currentSeason && baseTheme.colors) {
+    // Set the seasonal color based on the current season
+    baseTheme.colors.seasonal = baseTheme.colors[currentSeason];
+  }
+  
+  return baseTheme;
 };

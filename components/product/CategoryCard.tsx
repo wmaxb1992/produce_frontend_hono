@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Category } from '@/types';
-import useThemeStore, { defaultColors } from '@/store/useThemeStore';
+import useThemeStore from '@/store/useThemeStore';
+import defaultColors from '@/constants/colors';
 
 interface CategoryCardProps {
   category: Category;

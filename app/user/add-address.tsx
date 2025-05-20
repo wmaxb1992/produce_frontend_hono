@@ -226,6 +226,21 @@ export default function AddAddressScreen() {
               Add Address
             </Button>
             
+            {/* Quick fill button for LA address */}
+            <TouchableOpacity
+              style={[styles.quickFillButton, { backgroundColor: colors.gray[200] }]}
+              onPress={() => {
+                setStreet('109 S Flores St');
+                setCity('Los Angeles');
+                setState('CA');
+                setZip('90048');
+              }}
+            >
+              <Text style={[styles.quickFillText, { color: colors.text }]}>
+                Fill with LA Address
+              </Text>
+            </TouchableOpacity>
+            
             <Button
               variant="outline"
               onPress={() => router.back()}
@@ -301,4 +316,15 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   cancelButton: {},
+  quickFillButton: {
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  quickFillText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
 });

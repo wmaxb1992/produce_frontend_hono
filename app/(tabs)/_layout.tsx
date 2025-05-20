@@ -1,19 +1,42 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Home, Search, Heart, ShoppingBag, User } from 'lucide-react-native';
+import { Home, Search, Heart, ShoppingBag, User, Leaf } from 'lucide-react-native';
 import { View, Text } from 'react-native';
-import useThemeStore from '@/store/useThemeStore';
+import { useTheme } from '@/hooks/useTheme';
 import useCartStore from '@/store/useCartStore';
-import { getTheme } from '@/constants/theme';
 
 export default function TabsLayout() {
-  const { theme, themeType } = useThemeStore();
-  // Use the theme from the store if available, otherwise use a default theme
-  const currentTheme = theme || getTheme(themeType || 'light');
-  const { colors } = currentTheme;
+  const { colors } = useTheme();
   
-  const { getTotalItems } = useCartStore();
-  const cartItemCount = getTotalItems();
+  // Get cart item count
+  const [cartItemCount, setCartItemCount] = React.useState(0);
+  
+  // Subscribe to cart store changes
+  React.useEffect(() => {
+    // Initialize cart count
+    try {
+      const count = useCartStore.getState().getTotalItems();
+      setCartItemCount(count);
+    } catch (error) {
+      console.error("Error getting cart count:", error);
+    }
+    
+    // Subscribe to cart store updates
+    const unsubscribe = useCartStore.subscribe(
+      (state) => {
+        try {
+          const count = state.getTotalItems();
+          setCartItemCount(count);
+        } catch (error) {
+          console.error("Error updating cart count:", error);
+        }
+      }
+    );
+    
+    return () => {
+      unsubscribe();
+    };
+  }, []);
   
   return (
     <Tabs
@@ -44,9 +67,9 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="browse"
         options={{
-          title: 'Search',
+          title: 'Browse',
           tabBarIcon: ({ color, size }) => <Search size={size} color={color} />,
         }}
       />

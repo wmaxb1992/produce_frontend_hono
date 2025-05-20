@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { useColorScheme } from 'react-native';
-import useThemeStore, { defaultColors } from '@/store/useThemeStore';
-import { getTheme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
+import useThemeStore from '@/store/useThemeStore';
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -13,6 +13,7 @@ export default function RootLayout() {
 
   const colorScheme = useColorScheme();
   const themeStore = useThemeStore();
+  const { colors, theme } = useTheme();
   
   // Initialize theme if not already set
   useEffect(() => {
@@ -25,10 +26,6 @@ export default function RootLayout() {
     // Log the theme for debugging
     console.log('Theme initialized:', themeStore.themeType);
   }, []);
-  
-  // Get the current theme values
-  const theme = themeStore.getThemeValues();
-  const colors = theme.colors || defaultColors;
 
   if (!loaded) {
     return null;
@@ -36,22 +33,23 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style={themeStore.themeType === 'dark' ? 'light' : 'dark'} />
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerStyle: {
-            backgroundColor: colors.background || defaultColors.background,
+            backgroundColor: colors.background,
           },
-          headerTintColor: colors.text || defaultColors.text,
+          headerTintColor: colors.text,
           headerTitleStyle: {
             fontWeight: '600',
           },
           contentStyle: {
-            backgroundColor: colors.background || defaultColors.background,
+            backgroundColor: colors.background,
           },
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="farms-map" options={{ headerShown: true, title: "Farms Near You" }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
     </>

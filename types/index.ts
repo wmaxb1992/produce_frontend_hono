@@ -13,22 +13,14 @@ export interface ThemeColors {
   info: string;
   white: string;
   black: string;
+  gray: {
+    [key: string]: string;
+  };
+  seasonal?: string; // New seasonal accent color
   spring: string;
   summer: string;
   fall: string;
   winter: string;
-  gray: {
-    50: string;
-    100: string;
-    200: string;
-    300: string;
-    400: string;
-    500: string;
-    600: string;
-    700: string;
-    800: string;
-    900: string;
-  };
 }
 
 export interface Theme {
@@ -66,6 +58,7 @@ export interface Theme {
   };
   shadows: any;
   themeType: 'light' | 'dark';
+  season?: 'spring' | 'summer' | 'fall' | 'winter';
 }
 
 // Product Types
@@ -75,6 +68,41 @@ export interface Variety {
   subcategoryId: string;
   emoji: string;
   description: string;
+}
+
+/**
+ * Enhanced variety type with rich nutritional and taste profile information
+ */
+export interface EnhancedVariety extends Variety {
+  longDescription?: string;
+  origin?: string;
+  history?: string;
+  seasonality?: string[];
+  nutritionalInfo?: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fiber: number;
+    sugar: number;
+    fat: number;
+    vitamins: { name: string; percentage: number }[];
+    minerals: { name: string; percentage: number }[];
+  };
+  tasteProfile?: {
+    sweetness: number; // 1-5 scale
+    tartness: number;
+    crispness: number;
+    juiciness: number;
+  };
+  culinaryUses?: string[];
+  storageInfo?: string;
+  images?: {
+    hero: string;
+    detail: string[];
+    growing?: string;
+  };
+  // The most common substitutes for this variety
+  substitutes?: string[];
 }
 
 export interface Subcategory {
@@ -115,6 +143,30 @@ export interface Product {
   preHarvest: boolean;
   inSeason: boolean;
   organic: boolean;
+  seasons?: ('spring' | 'summer' | 'fall' | 'winter' | 'year-round')[];
+}
+
+/**
+ * Represents a relationship between a farm and a product/variety
+ * This allows multiple farms to offer the same product variety
+ */
+export interface FarmProduct {
+  id: string;
+  farmId: string;
+  productId: string;
+  varietyId: string;
+  price: number;
+  organic: boolean;
+  available: boolean;
+  stock: number;
+  harvestDate?: string;
+  estimatedHarvestDate?: string;
+  freshness?: number;
+  distance?: number; // Distance from user's location
+  deliveryDays?: string[]; // Days farm delivers this product
+  deliveryFee?: number;
+  deliveryMinimum?: number;
+  discount?: number; // Any special discount on this product
 }
 
 // Farm Types
@@ -207,22 +259,24 @@ export interface User {
 
 export interface Address {
   id: string;
-  name: string;
+  userId?: string;
   street: string;
   city: string;
   state: string;
   zip: string;
-  isDefault: boolean;
+  default: boolean;
   instructions?: string;
 }
 
 export interface PaymentMethod {
   id: string;
-  type: 'card' | 'paypal' | 'applepay' | 'googlepay';
-  name: string;
+  type: 'visa' | 'card' | 'paypal' | 'applepay' | 'googlepay';
+  name?: string;
   last4?: string;
+  expiryMonth?: number;
+  expiryYear?: number;
   expiryDate?: string;
-  isDefault: boolean;
+  default: boolean;
 }
 
 // Cart Types
@@ -251,6 +305,12 @@ export interface Cart {
   deliveryFee: number;
   tax: number;
   total: number;
+}
+
+export interface CartGroup {
+  zone: string;
+  items: CartItem[];
+  farms: Record<string, { name: string; items: CartItem[] }>;
 }
 
 // Order Types

@@ -23,55 +23,78 @@ export const SeasonalBadge = ({
   style,
 }: SeasonalBadgeProps) => {
   const themeStore = useThemeStore();
-  const theme = themeStore.getThemeValues ? themeStore.getThemeValues() : { colors: colors.light };
-  const themeColors = theme.colors || colors.light;
+  
+  // Ensure we have a theme, falling back to defaults if not available
+  let theme;
+  try {
+    theme = themeStore?.getThemeValues ? themeStore.getThemeValues() : { colors: colors.light };
+  } catch (error) {
+    console.warn("Error getting theme values:", error);
+    theme = { colors: colors.light };
+  }
+  
+  // Safely get theme colors with fallback
+  const themeColors = theme?.colors || colors.light;
+  
+  // Create styles with safe defaults
   const styles = createStyles(themeColors, size);
 
   const getSeasonIcon = () => {
-    const iconColor = getIconStyle().color;
+    const iconStyle = getIconStyle();
+    const iconColor = iconStyle?.color || '#000000';
+    const iconSize = styles?.icon?.width || 16;
+    
     switch (season) {
       case 'spring':
-        return <Leaf size={styles.icon.width} color={iconColor} />;
+        return <Leaf size={iconSize} color={iconColor} />;
       case 'summer':
-        return <Sun size={styles.icon.width} color={iconColor} />;
+        return <Sun size={iconSize} color={iconColor} />;
       case 'fall':
-        return <Leaf size={styles.icon.width} color={iconColor} />;
+        return <Leaf size={iconSize} color={iconColor} />;
       case 'winter':
-        return <Snowflake size={styles.icon.width} color={iconColor} />;
+        return <Snowflake size={iconSize} color={iconColor} />;
       case 'year-round':
-        return <Cloud size={styles.icon.width} color={iconColor} />;
+        return <Cloud size={iconSize} color={iconColor} />;
+      default:
+        return <Sun size={iconSize} color={iconColor} />;
     }
   };
 
   const getIconStyle = () => {
+    // Make sure themeColors properties exist
+    if (!themeColors) return { color: '#000000' };
+    
     switch (season) {
       case 'spring':
-        return { color: themeColors.success };
+        return { color: themeColors.success || '#4CAF50' };
       case 'summer':
-        return { color: themeColors.warning };
+        return { color: themeColors.warning || '#FFC107' };
       case 'fall':
-        return { color: themeColors.secondary };
+        return { color: themeColors.secondary || '#795548' };
       case 'winter':
-        return { color: themeColors.info };
+        return { color: themeColors.info || '#2196F3' };
       default:
-        return { color: themeColors.text };
+        return { color: themeColors.text || '#000000' };
     }
   };
 
   const getSeasonColor = () => {
-    if (!isInSeason) return themeColors.gray[400];
+    // Default gray color if theme is missing
+    if (!themeColors || !themeColors.gray) return '#9E9E9E';
+    
+    if (!isInSeason) return themeColors.gray[400] || '#BDBDBD';
     
     switch (season) {
       case 'spring':
-        return themeColors.success;
+        return themeColors.success || '#4CAF50';
       case 'summer':
-        return themeColors.warning;
+        return themeColors.warning || '#FFC107';
       case 'fall':
-        return themeColors.secondary;
+        return themeColors.secondary || '#795548';
       case 'winter':
-        return themeColors.info;
+        return themeColors.info || '#2196F3';
       default:
-        return themeColors.text;
+        return themeColors.text || '#000000';
     }
   };
 
@@ -82,14 +105,12 @@ export const SeasonalBadge = ({
     return isInSeason ? `In Season: ${seasonName}` : `Out of Season: ${seasonName}`;
   };
 
+  // Safely build styles with fallbacks
   const badgeStyle = {
     ...styles.badge,
-    backgroundColor: isInSeason ? getSeasonColor() + '20' : themeColors.gray[200],
-  };
-
-  const iconStyle = {
-    ...styles.icon,
-    color: getSeasonColor(),
+    backgroundColor: isInSeason 
+      ? (getSeasonColor() + '20') 
+      : ((themeColors?.gray && themeColors.gray[200]) || '#EEEEEE'),
   };
 
   return (
@@ -112,18 +133,35 @@ export const SeasonalAvailability: React.FC<SeasonalAvailabilityProps> = ({
   style 
 }) => {
   const themeStore = useThemeStore();
-  const theme = themeStore.getThemeValues ? themeStore.getThemeValues() : { colors: colors.light };
-  const themeColors = theme.colors || colors.light;
+  
+  // Ensure we have a theme, falling back to defaults if not available
+  let theme;
+  try {
+    theme = themeStore?.getThemeValues ? themeStore.getThemeValues() : { colors: colors.light };
+  } catch (error) {
+    console.warn("Error getting theme values:", error);
+    theme = { colors: colors.light };
+  }
+  
+  // Safely get theme colors with fallback
+  const themeColors = theme?.colors || colors.light;
+  
+  // Create styles with safe defaults
   const styles = createStyles(themeColors, 'small');
 
   const allSeasons: Season[] = ['spring', 'summer', 'fall', 'winter'];
   
+  // If seasons array is not defined, use empty array
+  const validSeasons = Array.isArray(seasons) ? seasons : [];
+  
   return (
     <View style={[styles.availabilityContainer, style]}>
-      <Text style={styles.availabilityTitle}>Seasonal Availability</Text>
+      <Text style={[styles.availabilityTitle, { color: themeColors.text || '#000000' }]}>
+        Seasonal Availability
+      </Text>
       <View style={styles.seasonsRow}>
         {allSeasons.map((season) => {
-          const isAvailable = seasons.includes(season);
+          const isAvailable = validSeasons.includes(season);
           const isCurrent = season === currentSeason;
           
           return (
@@ -154,7 +192,7 @@ export const SeasonalAvailability: React.FC<SeasonalAvailabilityProps> = ({
           );
         })}
       </View>
-      {seasons.includes('year-round') && (
+      {validSeasons.includes('year-round') && (
         <View style={styles.yearRoundBadge}>
           <SeasonalBadge season="year-round" size="small" />
         </View>
@@ -164,6 +202,19 @@ export const SeasonalAvailability: React.FC<SeasonalAvailabilityProps> = ({
 };
 
 const createStyles = (theme: any, size: 'small' | 'medium' | 'large') => {
+  // Ensure we have valid theme object with colors
+  const safeTheme = theme || { colors: colors.light };
+  const safeColors = safeTheme.colors || colors.light;
+  
+  // Get safe color values
+  const textColor = safeColors.text || '#000000';
+  const primaryColor = safeColors.primary || '#4CAF50';
+  const successColor = safeColors.success || '#4CAF50';
+  const grayColors = safeColors.gray || {
+    200: '#EEEEEE',
+    500: '#9E9E9E'
+  };
+  
   const sizeMap = {
     small: {
       badge: {
@@ -236,7 +287,7 @@ const createStyles = (theme: any, size: 'small' | 'medium' | 'large') => {
     availabilityTitle: {
       fontSize: 16,
       fontWeight: '600',
-      color: theme.colors.text,
+      color: textColor,
       marginBottom: 12,
     },
     seasonsRow: {
@@ -252,14 +303,14 @@ const createStyles = (theme: any, size: 'small' | 'medium' | 'large') => {
       position: 'relative',
     },
     seasonAvailable: {
-      backgroundColor: theme.colors.success + '10',
+      backgroundColor: successColor + '10',
     },
     seasonUnavailable: {
-      backgroundColor: theme.colors.gray[200],
+      backgroundColor: grayColors[200],
     },
     seasonCurrent: {
       borderWidth: 1,
-      borderColor: theme.colors.primary,
+      borderColor: primaryColor,
     },
     seasonLabel: {
       marginTop: 4,
@@ -267,10 +318,10 @@ const createStyles = (theme: any, size: 'small' | 'medium' | 'large') => {
       fontWeight: '500',
     },
     seasonLabelAvailable: {
-      color: theme.colors.text,
+      color: textColor,
     },
     seasonLabelUnavailable: {
-      color: theme.colors.gray[500],
+      color: grayColors[500],
     },
     currentIndicator: {
       position: 'absolute',
@@ -279,7 +330,7 @@ const createStyles = (theme: any, size: 'small' | 'medium' | 'large') => {
       width: 8,
       height: 8,
       borderRadius: 4,
-      backgroundColor: theme.colors.primary,
+      backgroundColor: primaryColor,
     },
     yearRoundBadge: {
       marginTop: 12,

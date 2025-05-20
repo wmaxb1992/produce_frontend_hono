@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 
 export const categoriesSectionStyles = StyleSheet.create({
   section: {
-    marginBottom: 4,
+    marginBottom: 14, // Increased from 4px to 14px to add 10px more space
   },
   sectionHeader: {
     flexDirection: 'row',

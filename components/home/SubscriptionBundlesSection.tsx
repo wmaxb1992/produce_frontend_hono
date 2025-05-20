@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import useThemeStore from '@/store/useThemeStore';
+import { useTheme } from '@/hooks/useTheme';
 import useSubscriptionStore from '@/store/useSubscriptionStore';
-import defaultColors from '@/constants/colors';
 import SubscriptionBundleCard from '@/components/subscription/SubscriptionBundleCard';
+import LoadingState from '@/components/ui/LoadingState';
 
 interface SubscriptionBundlesSectionProps {
   style?: any;
@@ -12,18 +12,9 @@ interface SubscriptionBundlesSectionProps {
 
 const SubscriptionBundlesSection: React.FC<SubscriptionBundlesSectionProps> = ({ style }) => {
   const router = useRouter();
-  let theme: any, themeColors: any;
+  const { colors } = useTheme();
   let bundles: any[] = [];
   let fetchBundles: any;
-  
-  try {
-    const themeStore = useThemeStore();
-    theme = themeStore?.theme;
-    themeColors = theme?.colors || defaultColors.light;
-  } catch (error) {
-    console.warn("Error using theme store in SubscriptionBundlesSection:", error);
-    themeColors = defaultColors.light;
-  }
   
   try {
     const subscriptionStore = useSubscriptionStore();
@@ -42,7 +33,6 @@ const SubscriptionBundlesSection: React.FC<SubscriptionBundlesSectionProps> = ({
   }, [bundles.length, fetchBundles]);
 
   const handleBundlePress = (bundleId: string) => {
-    // We'll create this screen later
     router.push({
       pathname: "/subscription/[id]",
       params: { id: bundleId }
@@ -52,24 +42,21 @@ const SubscriptionBundlesSection: React.FC<SubscriptionBundlesSectionProps> = ({
   // Debug: Check if bundles is actually empty
   console.log("Subscription bundles:", bundles);
   
-  // Return null only if bundles is empty - but add debug info first
+  // Return loading state if bundles is empty
   if (!bundles || !bundles.length) {
-    console.warn("No subscription bundles available");
     return (
       <View style={[styles.section, style]}>
-        <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
           Subscription Bundles
         </Text>
-        <View style={{padding: 16}}>
-          <Text style={{color: themeColors.text}}>Loading bundles...</Text>
-        </View>
+        <LoadingState message="Loading bundles..." size="small" />
       </View>
     );
   }
 
   return (
     <View style={[styles.section, style]}>
-      <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>
         Subscription Bundles
       </Text>
       

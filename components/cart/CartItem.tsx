@@ -2,35 +2,34 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Minus, Plus, Trash2, Calendar, RefreshCw } from 'lucide-react-native';
 import { CartItem as CartItemType } from '@/types';
-import useThemeStore from '@/store/useThemeStore';
+import { useTheme } from '@/hooks/useTheme';
 import useCartStore from '@/store/useCartStore';
 
 interface CartItemProps {
   item: CartItemType;
-  cartId: string;
+  cartId?: string; // Make optional since CartItem in our store doesn't have this
 }
 
-const CartItem: React.FC<CartItemProps> = ({ item, cartId }) => {
-  const { getThemeValues } = useThemeStore();
-  const theme = getThemeValues();
-  const { colors, borderRadius } = theme;
+const CartItem: React.FC<CartItemProps> = ({ item, cartId = '' }) => {
+  const { colors } = useTheme();
   
-  const { updateQuantity, removeFromCart } = useCartStore();
+  // Safely access the cart store functions
+  const { updateQuantity, removeItem } = useCartStore();
   
   const handleIncrement = () => {
-    updateQuantity(cartId, item.id, item.quantity + 1);
+    updateQuantity(item.id, item.quantity + 1);
   };
   
   const handleDecrement = () => {
     if (item.quantity > 1) {
-      updateQuantity(cartId, item.id, item.quantity - 1);
+      updateQuantity(item.id, item.quantity - 1);
     } else {
-      removeFromCart(cartId, item.id);
+      removeItem(item.id);
     }
   };
   
   const handleRemove = () => {
-    removeFromCart(cartId, item.id);
+    removeItem(item.id);
   };
   
   // Check if this is a subscription item
@@ -50,11 +49,11 @@ const CartItem: React.FC<CartItemProps> = ({ item, cartId }) => {
         </Text>
         
         <Text style={[styles.farmName, { color: colors.subtext }]} numberOfLines={1}>
-          From {item.farmName}
+          From {item.farmName || 'Unknown Farm'}
         </Text>
         
         <Text style={[styles.price, { color: colors.text }]}>
-          ${item.price.toFixed(2)} / {item.unit}
+          ${item.price.toFixed(2)} / {item.unit || 'item'}
         </Text>
         
         {isSubscription && (
@@ -63,19 +62,23 @@ const CartItem: React.FC<CartItemProps> = ({ item, cartId }) => {
               <Text style={styles.subscriptionBadgeText}>Subscription</Text>
             </View>
             
-            <View style={styles.deliveryInfoRow}>
-              <Calendar size={14} color={colors.primary} style={styles.infoIcon} />
-              <Text style={[styles.deliveryInfoText, { color: colors.text }]}>
-                Delivered on {item.metadata.deliveryDay}s
-              </Text>
-            </View>
+            {item.metadata?.deliveryDay && (
+              <View style={styles.deliveryInfoRow}>
+                <Calendar size={14} color={colors.primary} style={styles.infoIcon} />
+                <Text style={[styles.deliveryInfoText, { color: colors.text }]}>
+                  Delivered on {item.metadata.deliveryDay}s
+                </Text>
+              </View>
+            )}
             
-            <View style={styles.deliveryInfoRow}>
-              <RefreshCw size={14} color={colors.primary} style={styles.infoIcon} />
-              <Text style={[styles.deliveryInfoText, { color: colors.text }]}>
-                {item.metadata.frequency === 'weekly' ? 'Weekly' : 'Monthly'} delivery
-              </Text>
-            </View>
+            {item.metadata?.frequency && (
+              <View style={styles.deliveryInfoRow}>
+                <RefreshCw size={14} color={colors.primary} style={styles.infoIcon} />
+                <Text style={[styles.deliveryInfoText, { color: colors.text }]}>
+                  {item.metadata.frequency === 'weekly' ? 'Weekly' : 'Monthly'} delivery
+                </Text>
+              </View>
+            )}
           </View>
         )}
         

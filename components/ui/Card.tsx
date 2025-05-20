@@ -1,28 +1,55 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
-import useThemeStore from '@/store/useThemeStore';
+import { useTheme } from '@/hooks/useTheme';
+import { useSeasonalStyles } from '@/utils/seasonalStyles';
 
 interface CardProps {
   children: React.ReactNode;
   style?: ViewStyle;
   variant?: 'elevated' | 'outlined' | 'filled';
+  seasonal?: boolean;
+  intensity?: 'subtle' | 'medium' | 'strong';
 }
 
 const Card: React.FC<CardProps> = ({ 
   children, 
   style,
-  variant = 'elevated'
+  variant = 'elevated',
+  seasonal = true,
+  intensity = 'medium'
 }) => {
-  const { getThemeValues } = useThemeStore();
-  const theme = getThemeValues();
-  const { colors, borderRadius, shadows } = theme;
+  const { colors, isUsingSeasonalTheme } = useTheme();
+  const seasonalStyles = useSeasonalStyles();
 
   const getVariantStyle = (): ViewStyle => {
+    if (seasonal && seasonalStyles.isSeasonalActive) {
+      const seasonalVariant = 
+        variant === 'elevated' ? 'subtle' : 
+        variant === 'outlined' ? 'bordered' : 'filled';
+      
+      const bgOpacity = intensity === 'subtle' ? 0.05 : 
+                        intensity === 'medium' ? 0.15 : 0.25;
+      
+      const borderOpacity = intensity === 'subtle' ? 0.3 : 
+                          intensity === 'medium' ? 0.6 : 0.9;
+      
+      return {
+        backgroundColor: seasonalStyles.getBackgroundColor(bgOpacity),
+        borderColor: seasonalStyles.getBorderColor(borderOpacity),
+        borderWidth: variant === 'outlined' ? 2 : 1,
+        ...seasonalStyles.getShadow(variant === 'elevated' ? 'md' : 'sm')
+      };
+    }
+    
     switch (variant) {
       case 'elevated':
         return {
           backgroundColor: colors.card,
-          ...shadows.md,
+          shadowColor: colors.black,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 2,
           borderWidth: 0,
         };
       case 'outlined':
@@ -39,7 +66,11 @@ const Card: React.FC<CardProps> = ({
       default:
         return {
           backgroundColor: colors.card,
-          ...shadows.md,
+          shadowColor: colors.black,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 2,
           borderWidth: 0,
         };
     }
@@ -49,7 +80,7 @@ const Card: React.FC<CardProps> = ({
     <View 
       style={[
         styles.card, 
-        { borderRadius: borderRadius.md },
+        { borderRadius: 8 },
         getVariantStyle(),
         style
       ]}

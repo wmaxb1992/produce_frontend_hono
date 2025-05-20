@@ -554,7 +554,7 @@ export const mockCategories: Category[] = [
   {
     id: 'cat3',
     name: 'Meat & Fish',
-    image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    image: '/assets/images/cat_meat_fish.png',
     subcategories: mockSubcategories.filter(sub => sub.categoryId === 'cat3'),
   },
 ];

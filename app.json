@@ -15,14 +15,23 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.farm-fresh-delivery"
+      "bundleIdentifier": "app.rork.farm-fresh-delivery",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "This app uses your location to show you nearby farms."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.farm-fresh-delivery"
+      "package": "app.rork.farm-fresh-delivery",
+      "permissions": ["ACCESS_COARSE_LOCATION", "ACCESS_FINE_LOCATION"],
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyD-test-key-for-development-only"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -32,6 +41,12 @@
         "expo-router",
         {
           "origin": "https://rork.app/"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Farm Fresh Delivery to use your location to show you nearby farms."
         }
       ]
     ],

@@ -8,8 +8,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import useThemeStore from '@/store/useThemeStore';
-import { getTheme } from '@/constants/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -37,11 +36,7 @@ const Button: React.FC<ButtonProps> = ({
   disabled,
   ...rest
 }) => {
-  // Get the entire store instead of destructuring
-  const themeStore = useThemeStore();
-  // Get theme values safely
-  const currentTheme = themeStore.theme || getTheme(themeStore.themeType || 'light');
-  const { colors, borderRadius, spacing } = currentTheme;
+  const { colors } = useTheme();
 
   const getVariantStyles = (): ViewStyle => {
     switch (variant) {
@@ -91,27 +86,27 @@ const Button: React.FC<ButtonProps> = ({
     switch (size) {
       case 'sm':
         return {
-          paddingVertical: spacing.xs,
-          paddingHorizontal: spacing.md,
-          borderRadius: borderRadius.sm,
+          paddingVertical: 8,
+          paddingHorizontal: 16,
+          borderRadius: 6,
         };
       case 'md':
         return {
-          paddingVertical: spacing.sm,
-          paddingHorizontal: spacing.lg,
-          borderRadius: borderRadius.md,
+          paddingVertical: 12,
+          paddingHorizontal: 20,
+          borderRadius: 8,
         };
       case 'lg':
         return {
-          paddingVertical: spacing.md,
-          paddingHorizontal: spacing.xl,
-          borderRadius: borderRadius.md,
+          paddingVertical: 16,
+          paddingHorizontal: 24,
+          borderRadius: 8,
         };
       default:
         return {
-          paddingVertical: spacing.sm,
-          paddingHorizontal: spacing.lg,
-          borderRadius: borderRadius.md,
+          paddingVertical: 12,
+          paddingHorizontal: 20,
+          borderRadius: 8,
         };
     }
   };

@@ -3,26 +3,32 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { MapPin, Star } from 'lucide-react-native';
 import { Farm } from '@/types';
-import useThemeStore, { defaultColors } from '@/store/useThemeStore';
+import { useTheme } from '@/hooks/useTheme';
 import Card from '@/components/ui/Card';
 
 interface FarmCardProps {
   farm: Farm;
   onPress?: () => void;
+  listView?: boolean;
 }
 
-const FarmCard: React.FC<FarmCardProps> = ({ farm, onPress }) => {
+const FarmCard: React.FC<FarmCardProps> = ({ farm, onPress, listView }) => {
   const router = useRouter();
-  const themeStore = useThemeStore();
-  const theme = themeStore.getThemeValues ? themeStore.getThemeValues() : { colors: defaultColors };
-  const colors = theme.colors || defaultColors;
+  const { colors } = useTheme();
   
   const handlePress = () => {
-    router.push(`/farm/${farm.id}`);
+    if (onPress) {
+      onPress();
+    } else {
+      router.push(`/farm/${farm.id}`);
+    }
   };
   
   return (
-    <Card style={styles.card}>
+    <Card style={{
+      ...styles.card, 
+      ...(listView ? styles.listCard : styles.gridCard)
+    }}>
       <TouchableOpacity 
         activeOpacity={0.8}
         onPress={handlePress}
@@ -34,12 +40,12 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm, onPress }) => {
             resizeMode="cover"
           />
           <View style={styles.headerContent}>
-            <Text style={[styles.name, { color: colors.text || defaultColors.text }]} numberOfLines={1}>
+            <Text style={[styles.name, { color: colors.text }]} numberOfLines={1}>
               {farm.name}
             </Text>
             <View style={styles.locationContainer}>
-              <MapPin size={14} color={colors.subtext || defaultColors.subtext} />
-              <Text style={[styles.location, { color: colors.subtext || defaultColors.subtext }]} numberOfLines={1}>
+              <MapPin size={14} color={colors.subtext} />
+              <Text style={[styles.location, { color: colors.subtext }]} numberOfLines={1}>
                 {farm.location.city}, {farm.location.state}
               </Text>
             </View>
@@ -56,10 +62,10 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm, onPress }) => {
           <View style={styles.ratingContainer}>
             <Star 
               size={16} 
-              color={colors.secondary || defaultColors.secondary} 
-              fill={colors.secondary || defaultColors.secondary} 
+              color={colors.secondary} 
+              fill={colors.secondary} 
             />
-            <Text style={[styles.rating, { color: colors.text || defaultColors.text }]}>
+            <Text style={[styles.rating, { color: colors.text }]}>
               {farm.rating.toFixed(1)} ({farm.reviewCount})
             </Text>
           </View>
@@ -70,11 +76,11 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm, onPress }) => {
                 key={index} 
                 style={[
                   styles.specialtyBadge, 
-                  { backgroundColor: colors.gray?.[100] || defaultColors.gray[100] }
+                  { backgroundColor: colors.gray[100] }
                 ]}
               >
                 <Text 
-                  style={[styles.specialtyText, { color: colors.text || defaultColors.text }]}
+                  style={[styles.specialtyText, { color: colors.text }]}
                   numberOfLines={1}
                 >
                   {specialty}
@@ -82,8 +88,8 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm, onPress }) => {
               </View>
             ))}
             {farm.specialties.length > 2 && (
-              <Text style={[styles.moreText, { color: colors.subtext || defaultColors.subtext }]}>
-                +{farm.specialties.length - 2} more
+              <Text style={[styles.moreText, { color: colors.subtext }]}>
+                +{farm.specialties.length - 2}
               </Text>
             )}
           </View>
@@ -98,8 +104,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     padding: 0,
     overflow: 'hidden',
-    width: 300,
-    marginRight: 16,
+  },
+  gridCard: {
+    width: 260,
+  },
+  listCard: {
+    width: '100%',
   },
   header: {
     flexDirection: 'row',
@@ -141,6 +151,7 @@ const styles = StyleSheet.create({
   ratingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    minWidth: 80,
   },
   rating: {
     fontSize: 14,
@@ -150,16 +161,21 @@ const styles = StyleSheet.create({
   specialtiesContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    flex: 1,
+    justifyContent: 'flex-end',
   },
   specialtyBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
     marginLeft: 6,
+    marginBottom: 4,
   },
   specialtyText: {
     fontSize: 12,
     fontWeight: '500',
+    maxWidth: 80,
   },
   moreText: {
     fontSize: 12,

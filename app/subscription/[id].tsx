@@ -2,21 +2,22 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, Modal, FlatList, Alert } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Leaf, Apple, Flower2, Calendar, Clock, Check, Info, ShoppingBag, X, ChevronRight, Dot } from 'lucide-react-native';
-import useThemeStore from '@/store/useThemeStore';
+import { useTheme } from '@/hooks/useTheme';
 import useSubscriptionStore from '@/store/useSubscriptionStore';
 import useCartStore from '@/store/useCartStore';
-import defaultColors from '@/constants/colors';
 import RoundButton from '@/components/ui/RoundButton';
 import { RadioButton } from '@/components/ui/RadioButton';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { SubscriptionBundle } from '@/types';
+import LoadingState from '@/components/ui/LoadingState';
+import ErrorState from '@/components/ui/ErrorState';
 
 export default function SubscriptionDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { theme } = useThemeStore();
-  const colors = theme?.colors || defaultColors.light;
-  const { bundles } = useSubscriptionStore();
+  const { colors } = useTheme();
+  
+  const { bundles, isLoading, error, fetchBundles } = useSubscriptionStore();
   const { addItem } = useCartStore();
   
   const [bundle, setBundle] = useState<SubscriptionBundle | null>(null);
@@ -38,9 +39,14 @@ export default function SubscriptionDetailScreen() {
       const foundBundle = bundles.find(b => b.id === id);
       if (foundBundle) {
         setBundle(foundBundle);
+      } else {
+        console.warn(`Bundle with id ${id} not found in bundles array:`, bundles);
       }
+    } else if (bundles.length === 0 && !isLoading) {
+      // If bundles are empty but not loading, try to fetch them
+      fetchBundles().catch(err => console.error("Error fetching bundles in detail view:", err));
     }
-  }, [id, bundles]);
+  }, [id, bundles, isLoading, fetchBundles]);
   
   // Generate mock images based on bundle image
   useEffect(() => {
@@ -141,10 +147,35 @@ export default function SubscriptionDetailScreen() {
     setShowExpandedImage(false);
   };
   
+  // Loading state
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <LoadingState message="Loading subscription details..." />
+      </View>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ErrorState 
+          message="Could not load subscription details" 
+          onRetry={() => fetchBundles()}
+        />
+      </View>
+    );
+  }
+  
+  // No bundle found state
   if (!bundle) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <Text style={[styles.loadingText, { color: colors.text }]}>Loading...</Text>
+        <ErrorState 
+          message={`Subscription bundle not found. ID: ${id}`} 
+          onRetry={() => router.back()}
+        />
       </View>
     );
   }
@@ -548,8 +579,7 @@ export default function SubscriptionDetailScreen() {
 
 // Define ProductRow component inline
 const ProductRow = ({ name, quantity }: { name: string; quantity: string }) => {
-  const { theme } = useThemeStore();
-  const colors = theme?.colors || defaultColors.light;
+  const { colors } = useTheme();
   
   return (
     <View style={styles.productRow}>

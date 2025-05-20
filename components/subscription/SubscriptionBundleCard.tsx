@@ -4,8 +4,7 @@ import { useRouter } from 'expo-router';
 import { SubscriptionBundle } from '@/types';
 import { Tag, Leaf, Apple, Flower2 } from 'lucide-react-native';
 import Card from '@/components/ui/Card';
-import useThemeStore from '@/store/useThemeStore';
-import defaultColors from '@/constants/colors';
+import { useTheme } from '@/hooks/useTheme';
 
 interface SubscriptionBundleCardProps {
   bundle: SubscriptionBundle;
@@ -19,8 +18,7 @@ const SubscriptionBundleCard: React.FC<SubscriptionBundleCardProps> = ({
   style
 }) => {
   const router = useRouter();
-  const { theme } = useThemeStore();
-  const colors = theme?.colors || defaultColors.light;
+  const { colors } = useTheme();
 
   const handlePress = () => {
     if (onPress) {

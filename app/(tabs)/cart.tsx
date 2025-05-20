@@ -9,66 +9,54 @@ import {
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { ShoppingBag, Truck, AlertCircle, MapPin } from 'lucide-react-native';
-import useThemeStore from '@/store/useThemeStore';
+import { useTheme } from '@/hooks/useTheme';
 import useCartStore from '@/store/useCartStore';
 import CartItem from '@/components/cart/CartItem';
 import Button from '@/components/ui/Button';
+import LoadingState from '@/components/ui/LoadingState';
+import ErrorState from '@/components/ui/ErrorState';
+import { CartItem as CartItemType, CartGroup } from '@/types';
 
 export default function CartScreen() {
   const router = useRouter();
-  
-  // Add error handling for theme store
-  let theme;
-  let colors;
-  
-  try {
-    const { getThemeValues } = useThemeStore();
-    theme = getThemeValues();
-    colors = theme.colors;
-  } catch (error) {
-    console.error("Error accessing theme store:", error);
-    // Fallback to light theme colors from constants if there's an error
-    colors = {
-      background: '#FFFFFF',
-      card: '#F9F9F9',
-      text: '#333333',
-      subtext: '#666666',
-      border: '#EEEEEE',
-      primary: '#4CAF50',
-      error: '#F44336',
-      info: '#2196F3',
-      gray: {
-        100: '#F5F5F5',
-        300: '#E0E0E0',
-      }
-    };
-  }
+  const { colors } = useTheme();
   
   // Add error handling for cart store
-  let items = [];
-  let clearCart = () => {};
-  let getTotalPrice = () => 0;
-  let getCartGroups = () => [];
+  const [items, setItems] = React.useState<CartItemType[]>([]);
+  const [cartGroups, setCartGroups] = React.useState<CartGroup[]>([]);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [error, setError] = React.useState<Error | null>(null);
   
-  try {
-    const cartStore = useCartStore();
-    items = cartStore.items || [];
-    clearCart = cartStore.clearCart || (() => {});
-    getTotalPrice = cartStore.getTotalPrice || (() => 0);
-    getCartGroups = cartStore.getCartGroups || (() => []);
-  } catch (error) {
-    console.error("Error accessing cart store:", error);
-  }
-  
-  // Get cart groups
-  const cartGroups = React.useMemo(() => {
+  // Get cart data from store
+  React.useEffect(() => {
     try {
-      return getCartGroups();
-    } catch (error) {
-      console.error("Error getting cart groups:", error);
-      return [];
+      const cartStore = useCartStore.getState();
+      setItems(cartStore.items || []);
+      
+      // Get cart groups
+      const groups = cartStore.getCartGroups();
+      setCartGroups(groups || []);
+    } catch (err) {
+      console.error("Error accessing cart store:", err);
+      setError(err instanceof Error ? err : new Error("Failed to load cart data"));
+    } finally {
+      setIsLoading(false);
     }
-  }, [items]);
+  }, []);
+  
+  // Subscribe to cart store changes
+  React.useEffect(() => {
+    const unsubscribe = useCartStore.subscribe(
+      (state) => {
+        setItems(state.items || []);
+        setCartGroups(state.getCartGroups());
+      }
+    );
+    
+    return () => {
+      unsubscribe();
+    };
+  }, []);
   
   const handleCheckout = () => {
     // Check if cart is empty
@@ -94,12 +82,45 @@ export default function CartScreen() {
         },
         {
           text: 'Clear',
-          onPress: () => clearCart(),
+          onPress: () => {
+            try {
+              useCartStore.getState().clearCart();
+            } catch (err) {
+              console.error("Error clearing cart:", err);
+            }
+          },
           style: 'destructive',
         },
       ]
     );
   };
+  
+  // Show loading state
+  if (isLoading) {
+    return (
+      <>
+        <Stack.Screen options={{ title: 'Your Cart' }} />
+        <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+          <LoadingState message="Loading your cart..." />
+        </View>
+      </>
+    );
+  }
+  
+  // Show error state
+  if (error) {
+    return (
+      <>
+        <Stack.Screen options={{ title: 'Your Cart' }} />
+        <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
+          <ErrorState 
+            message="Could not load your cart" 
+            onRetry={() => router.reload()}
+          />
+        </View>
+      </>
+    );
+  }
   
   if (!items || items.length === 0) {
     return (
@@ -124,6 +145,11 @@ export default function CartScreen() {
       </>
     );
   }
+  
+  // Calculate total price
+  const getTotalPrice = () => {
+    return items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
   
   return (
     <>

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Heart, MessageCircle, Share } from 'lucide-react-native';
 import { FarmPost } from '@/types';
-import useThemeStore, { defaultColors } from '@/store/useThemeStore';
+import { useTheme } from '@/hooks/useTheme';
 import Card from '@/components/ui/Card';
 
 interface FarmPostCardProps {
@@ -11,9 +11,7 @@ interface FarmPostCardProps {
 }
 
 const FarmPostCard: React.FC<FarmPostCardProps> = ({ post, onPress }) => {
-  const themeStore = useThemeStore();
-  const theme = themeStore.getThemeValues ? themeStore.getThemeValues() : { colors: defaultColors };
-  const colors = theme.colors || defaultColors;
+  const { colors } = useTheme();
   
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -37,16 +35,16 @@ const FarmPostCard: React.FC<FarmPostCardProps> = ({ post, onPress }) => {
             resizeMode="cover"
           />
           <View style={styles.headerContent}>
-            <Text style={[styles.farmName, { color: colors.text || defaultColors.text }]}>
+            <Text style={[styles.farmName, { color: colors.text }]}>
               {post.farmName}
             </Text>
-            <Text style={[styles.date, { color: colors.subtext || defaultColors.subtext }]}>
+            <Text style={[styles.date, { color: colors.subtext }]}>
               {formatDate(post.createdAt)}
             </Text>
           </View>
         </View>
         
-        <Text style={[styles.content, { color: colors.text || defaultColors.text }]}>
+        <Text style={[styles.content, { color: colors.text }]}>
           {post.content}
         </Text>
         
@@ -74,9 +72,9 @@ const FarmPostCard: React.FC<FarmPostCardProps> = ({ post, onPress }) => {
                 {post.images.length > 3 && (
                   <View style={[
                     styles.moreImagesOverlay, 
-                    { backgroundColor: (colors.black || defaultColors.black) + '80' }
+                    { backgroundColor: colors.black + '80' }
                   ]}>
-                    <Text style={[styles.moreImagesText, { color: colors.white || defaultColors.white }]}>
+                    <Text style={[styles.moreImagesText, { color: colors.white }]}>
                       +{post.images.length - 3}
                     </Text>
                   </View>
@@ -90,30 +88,30 @@ const FarmPostCard: React.FC<FarmPostCardProps> = ({ post, onPress }) => {
           {post.tags.map((tag, index) => (
             <Text 
               key={index} 
-              style={[styles.tag, { color: colors.primary || defaultColors.primary }]}
+              style={[styles.tag, { color: colors.primary }]}
             >
               #{tag}
             </Text>
           ))}
         </View>
         
-        <View style={[styles.footer, { borderTopColor: colors.border || defaultColors.border }]}>
+        <View style={[styles.footer, { borderTopColor: colors.border }]}>
           <TouchableOpacity style={styles.actionButton}>
-            <Heart size={20} color={colors.subtext || defaultColors.subtext} />
-            <Text style={[styles.actionText, { color: colors.subtext || defaultColors.subtext }]}>
+            <Heart size={20} color={colors.subtext} />
+            <Text style={[styles.actionText, { color: colors.subtext }]}>
               {post.likes}
             </Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
-            <MessageCircle size={20} color={colors.subtext || defaultColors.subtext} />
-            <Text style={[styles.actionText, { color: colors.subtext || defaultColors.subtext }]}>
+            <MessageCircle size={20} color={colors.subtext} />
+            <Text style={[styles.actionText, { color: colors.subtext }]}>
               {post.comments}
             </Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.actionButton}>
-            <Share size={20} color={colors.subtext || defaultColors.subtext} />
+            <Share size={20} color={colors.subtext} />
           </TouchableOpacity>
         </View>
       </TouchableOpacity>

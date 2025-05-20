@@ -5,7 +5,8 @@ import { Heart, Sparkles } from 'lucide-react-native';
 import { Product } from '@/types';
 import Card from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
-import useThemeStore from '@/store/useThemeStore';
+import { useTheme } from '@/hooks/useTheme';
+import { useSeasonalStyles } from '@/utils/seasonalStyles';
 import useCartStore from '@/store/useCartStore';
 import useUserStore from '@/store/useUserStore';
 
@@ -17,33 +18,11 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, showFarm = false }) => {
   const router = useRouter();
+  const { colors, isUsingSeasonalTheme, season } = useTheme();
+  const seasonalStyles = useSeasonalStyles();
   
-  // Add error handling for theme store
-  let theme;
-  let colors;
-  
-  try {
-    const themeStore = useThemeStore();
-    theme = themeStore.getThemeValues ? themeStore.getThemeValues() : { colors: {} };
-    colors = theme.colors || {};
-  } catch (error) {
-    console.error("Error accessing theme store:", error);
-    // Fallback to light theme colors
-    colors = {
-      text: '#333333',
-      subtext: '#666666',
-      primary: '#4CAF50',
-      error: '#F44336',
-      card: '#FFFFFF',
-      gray: {
-        400: '#BDBDBD',
-      },
-      white: '#FFFFFF',
-      success: '#4CAF50',
-      warning: '#FF9800',
-      info: '#2196F3',
-    };
-  }
+  // Check if this product is in season for seasonal styling
+  const isProductInSeason = product.seasons?.includes(season);
   
   // Add error handling for cart store
   let addToCart = (product: Product, quantity: number) => {
@@ -100,11 +79,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, showFarm = 
     }
   };
   
+  // Use seasonal card styles if product is in season
+  const cardVariant = isUsingSeasonalTheme && isProductInSeason ? 'outlined' : 'elevated';
+  
   return (
-    <Card style={styles.card}>
+    <Card 
+      style={styles.card} 
+      variant={cardVariant}
+      seasonal={isProductInSeason} // Only apply seasonal styling if product is in season
+      intensity={isProductInSeason ? 'strong' : 'subtle'} // Stronger styling for in-season products
+    >
       <TouchableOpacity 
         activeOpacity={0.8}
-        onPress={onPress}
+        onPress={onPress || handlePress}
         style={styles.container}
       >
         <View style={styles.imageContainer}>
@@ -114,13 +101,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, showFarm = 
             resizeMode="cover"
           />
           <TouchableOpacity 
-            style={[styles.favoriteButton, { backgroundColor: colors.card || '#FFFFFF' }]}
+            style={[
+              styles.favoriteButton, 
+              { 
+                backgroundColor: colors.card,
+                ...(isUsingSeasonalTheme && isProductInSeason ? seasonalStyles.getShadow('sm') : {})
+              }
+            ]}
             onPress={toggleFavorite}
           >
             <Heart 
               size={18} 
-              color={isFavorite ? colors.error || '#F44336' : colors.gray?.[400] || '#BDBDBD'} 
-              fill={isFavorite ? colors.error || '#F44336' : 'none'}
+              color={isFavorite ? colors.error : colors.gray[400]} 
+              fill={isFavorite ? colors.error : 'none'}
             />
           </TouchableOpacity>
           
@@ -143,29 +136,63 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, showFarm = 
               />
             </View>
           )}
+          
+          {/* Add seasonal badge if product is in season */}
+          {isUsingSeasonalTheme && isProductInSeason && (
+            <View style={[styles.badgeContainer, { top: product.organic && product.preHarvest ? 48 : product.organic || product.preHarvest ? 28 : 8 }]}>
+              <Badge 
+                text="In Season" 
+                variant="seasonal" 
+                size="sm"
+                customColor={colors.seasonal}
+              />
+            </View>
+          )}
         </View>
         
         <View style={styles.contentContainer}>
-          <Text style={[styles.name, { color: colors.text || '#333333' }]} numberOfLines={1}>
+          <Text 
+            style={[
+              styles.name, 
+              { 
+                color: isUsingSeasonalTheme && isProductInSeason 
+                  ? colors.seasonal
+                  : colors.text,
+                fontWeight: isProductInSeason ? '700' : '600' // Make in-season products bolder
+              }
+            ]} 
+            numberOfLines={1}
+          >
             {product.name}
           </Text>
           
           {showFarm && product.farmName && (
-            <Text style={[styles.farmName, { color: colors.subtext || '#666666' }]} numberOfLines={1}>
+            <Text style={[styles.farmName, { color: colors.subtext }]} numberOfLines={1}>
               From {product.farmName}
             </Text>
           )}
           
           <View style={styles.priceRow}>
-            <Text style={[styles.price, { color: colors.text || '#333333' }]}>
+            <Text style={[styles.price, { 
+              color: isUsingSeasonalTheme && isProductInSeason 
+                ? colors.seasonal 
+                : colors.text 
+            }]}>
               ${product.price.toFixed(2)} <Text style={styles.unit}>/ {product.unit}</Text>
             </Text>
             
             <TouchableOpacity 
-              style={[styles.addButton, { backgroundColor: colors.primary || '#4CAF50' }]}
+              style={[
+                styles.addButton, 
+                { 
+                  backgroundColor: isUsingSeasonalTheme && isProductInSeason
+                    ? colors.seasonal
+                    : colors.primary 
+                }
+              ]}
               onPress={handleAddToCart}
             >
-              <Sparkles size={18} color={colors.white || '#FFFFFF'} />
+              <Sparkles size={18} color={colors.white} />
             </TouchableOpacity>
           </View>
           
@@ -177,23 +204,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, showFarm = 
                     styles.freshnessIndicator, 
                     { 
                       width: `${product.freshness}%`,
-                      backgroundColor: product.freshness > 70 
-                        ? colors.success || '#4CAF50' 
-                        : product.freshness > 40 
-                          ? colors.warning || '#FF9800' 
-                          : colors.error || '#F44336'
+                      backgroundColor: isUsingSeasonalTheme && isProductInSeason
+                        ? colors.seasonal
+                        : product.freshness > 70 
+                          ? colors.success 
+                          : product.freshness > 40 
+                            ? colors.warning 
+                            : colors.error
                     }
                   ]} 
                 />
               </View>
-              <Text style={[styles.freshnessText, { color: colors.subtext || '#666666' }]}>
+              <Text style={[styles.freshnessText, { color: colors.subtext }]}>
                 {daysSinceHarvest === 0 ? 'Harvested today' : `${daysSinceHarvest} day${daysSinceHarvest !== 1 ? 's' : ''} ago`}
               </Text>
             </View>
           )}
           
           {product.preHarvest && product.estimatedHarvestDate && (
-            <Text style={[styles.preHarvestText, { color: colors.info || '#2196F3' }]}>
+            <Text style={[styles.preHarvestText, { 
+              color: isUsingSeasonalTheme && isProductInSeason 
+                ? colors.seasonal 
+                : colors.info 
+            }]}>
               Est. harvest: {new Date(product.estimatedHarvestDate).toLocaleDateString()}
             </Text>
           )}

@@ -1,23 +1,36 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Variety } from '@/types';
-import useThemeStore, { defaultColors } from '@/store/useThemeStore';
+import { useTheme } from '@/hooks/useTheme';
 import useProductStore from '@/store/useProductStore';
 
 interface VarietyChipProps {
   variety: Variety;
-  isSelected: boolean;
+  isSelected?: boolean;
+  enableSelect?: boolean;
+  onPress?: (variety: Variety) => void;
 }
 
-const VarietyChip: React.FC<VarietyChipProps> = ({ variety, isSelected }) => {
-  const themeStore = useThemeStore();
-  const theme = themeStore.getThemeValues ? themeStore.getThemeValues() : { colors: defaultColors };
-  const colors = theme.colors || defaultColors;
-  
+const VarietyChip: React.FC<VarietyChipProps> = ({ 
+  variety, 
+  isSelected = false,
+  enableSelect = true,
+  onPress
+}) => {
+  const router = useRouter();
+  const { colors } = useTheme();
   const { setSelectedVariety } = useProductStore();
   
   const handlePress = () => {
-    setSelectedVariety(isSelected ? null : variety.id);
+    if (onPress) {
+      onPress(variety);
+    } else if (enableSelect) {
+      setSelectedVariety(isSelected ? null : variety.id);
+    } else {
+      // Navigate to variety detail page
+      router.push(`/variety/${variety.id}`);
+    }
   };
   
   return (
@@ -25,8 +38,8 @@ const VarietyChip: React.FC<VarietyChipProps> = ({ variety, isSelected }) => {
       style={[
         styles.container, 
         { 
-          backgroundColor: isSelected ? colors.primary || defaultColors.primary : colors.card || defaultColors.card,
-          borderColor: isSelected ? colors.primary || defaultColors.primary : colors.border || defaultColors.border,
+          backgroundColor: isSelected ? colors.primary : colors.card,
+          borderColor: isSelected ? colors.primary : colors.border,
         }
       ]}
       activeOpacity={0.7}
@@ -36,7 +49,7 @@ const VarietyChip: React.FC<VarietyChipProps> = ({ variety, isSelected }) => {
       <Text 
         style={[
           styles.name, 
-          { color: isSelected ? colors.white || defaultColors.white : colors.text || defaultColors.text }
+          { color: isSelected ? colors.white : colors.text }
         ]}
         numberOfLines={2}
       >

@@ -1,7 +1,7 @@
 import { Theme } from '@/types';
 
 export const colors = {
-  primary: '#4CAF50',
+  primary: '#9CCB11FF',
   secondary: '#E8F5E9',
   background: '#FFFFFF',
   card: '#F5F5F5',

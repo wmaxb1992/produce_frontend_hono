@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, TextStyle } from 'react-native';
-import useThemeStore from '@/store/useThemeStore';
+import { useTheme } from '@/hooks/useTheme';
 
-type BadgeVariant = 'default' | 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info';
+type BadgeVariant = 'default' | 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info' | 'seasonal';
 type BadgeSize = 'sm' | 'md' | 'lg';
 
 interface BadgeProps {
@@ -11,6 +11,7 @@ interface BadgeProps {
   size?: BadgeSize;
   style?: ViewStyle;
   textStyle?: TextStyle;
+  customColor?: string;
 }
 
 const Badge: React.FC<BadgeProps> = ({
@@ -19,12 +20,15 @@ const Badge: React.FC<BadgeProps> = ({
   size = 'md',
   style,
   textStyle,
+  customColor,
 }) => {
-  const { getThemeValues } = useThemeStore();
-  const theme = getThemeValues();
-  const { colors, borderRadius } = theme;
+  const { colors } = useTheme();
 
   const getVariantColors = (): { bg: string; text: string } => {
+    if (customColor) {
+      return { bg: customColor, text: colors.white };
+    }
+    
     switch (variant) {
       case 'primary':
         return { bg: colors.primary, text: colors.white };
@@ -38,6 +42,8 @@ const Badge: React.FC<BadgeProps> = ({
         return { bg: colors.warning, text: colors.black };
       case 'info':
         return { bg: colors.info, text: colors.white };
+      case 'seasonal':
+        return { bg: colors.seasonal || colors.primary, text: colors.white };
       default:
         return { bg: colors.gray[200], text: colors.gray[800] };
     }
@@ -50,7 +56,7 @@ const Badge: React.FC<BadgeProps> = ({
           container: {
             paddingVertical: 2,
             paddingHorizontal: 6,
-            borderRadius: borderRadius.xs,
+            borderRadius: 4,
           },
           text: { fontSize: 10 },
         };
@@ -59,7 +65,7 @@ const Badge: React.FC<BadgeProps> = ({
           container: {
             paddingVertical: 6,
             paddingHorizontal: 12,
-            borderRadius: borderRadius.md,
+            borderRadius: 8,
           },
           text: { fontSize: 14 },
         };
@@ -68,7 +74,7 @@ const Badge: React.FC<BadgeProps> = ({
           container: {
             paddingVertical: 4,
             paddingHorizontal: 8,
-            borderRadius: borderRadius.sm,
+            borderRadius: 6,
           },
           text: { fontSize: 12 },
         };

@@ -76,7 +76,7 @@ const palette = {
 
 // Light theme colors
 const light = {
-  primary: palette.green[500],
+  primary: palette.green[200],
   secondary: palette.amber[500],
   background: '#FFFFFF',
   card: '#FFFFFF',
@@ -90,6 +90,7 @@ const light = {
   white: '#FFFFFF',
   black: '#000000',
   gray: palette.gray,
+  seasonal: palette.green[500],
   spring: palette.green[500],
   summer: palette.amber[500],
   fall: palette.brown[500],
@@ -113,11 +114,16 @@ const dark = {
   black: '#000000',
   gray: {
     ...palette.gray,
-    100: palette.gray[800], // Invert for dark theme
+    100: palette.gray[800],
     200: palette.gray[700],
     700: palette.gray[200],
     800: palette.gray[100],
   },
+  seasonal: palette.green[400],
+  spring: palette.green[400],
+  summer: palette.amber[400],
+  fall: palette.brown[400],
+  winter: palette.blue[400],
 };
 
 export default {

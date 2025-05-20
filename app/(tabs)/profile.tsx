@@ -6,8 +6,6 @@ import {
   ScrollView, 
   TouchableOpacity,
   Image,
-  Switch,
-  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { 
@@ -23,16 +21,19 @@ import {
   Moon,
   LogIn,
   Calendar,
+  Leaf,
+  Flame,
+  Snowflake,
 } from 'lucide-react-native';
-import useThemeStore from '@/store/useThemeStore';
+import { useTheme } from '@/hooks/useTheme';
 import useUserStore from '@/store/useUserStore';
 import useAuthStore from '@/store/useAuthStore';
+import LoadingState from '@/components/ui/LoadingState';
+import ThemeControls from '@/components/ui/ThemeControls';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { getThemeValues, theme, toggleTheme } = useThemeStore();
-  const themeValues = getThemeValues();
-  const { colors } = themeValues;
+  const { colors, theme, season, isUsingSeasonalTheme } = useTheme();
   
   const { user: localUser, logout: logoutLocal } = useUserStore();
   const { 
@@ -77,10 +78,7 @@ export default function ProfileScreen() {
   if (isLoading) {
     return (
       <View style={[styles.emptyContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={[styles.emptySubtitle, { color: colors.subtext, marginTop: 16 }]}>
-          Loading...
-        </Text>
+        <LoadingState message="Loading profile..." />
       </View>
     );
   }
@@ -113,8 +111,38 @@ export default function ProfileScreen() {
     );
   }
   
+  // Get season icon and text
+  const getSeasonIcon = () => {
+    switch (season) {
+      case 'spring':
+        return <Leaf size={24} color="#fff" />;
+      case 'summer':
+        return <Sun size={24} color="#fff" />;
+      case 'fall':
+        return <Flame size={24} color="#fff" />;
+      case 'winter':
+        return <Snowflake size={24} color="#fff" />;
+      default:
+        return <Leaf size={24} color="#fff" />;
+    }
+  };
+
+  const getSeasonText = () => {
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    return `${season.charAt(0).toUpperCase() + season.slice(1)} ${year}`;
+  };
+  
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Seasonal Banner - only show when seasonal themes are enabled */}
+      {isUsingSeasonalTheme && (
+        <View style={[styles.seasonalBanner, { backgroundColor: colors.seasonal }]}>
+          {getSeasonIcon()}
+          <Text style={styles.seasonalText}>{getSeasonText()}</Text>
+        </View>
+      )}
+    
       {/* Profile Header */}
       <View style={[styles.header, { backgroundColor: colors.card }]}>
         <Image 
@@ -130,32 +158,15 @@ export default function ProfileScreen() {
           </Text>
         </View>
         <TouchableOpacity style={styles.editButton}>
-          <Text style={[styles.editButtonText, { color: colors.primary }]}>
+          <Text style={[styles.editButtonText, { color: isUsingSeasonalTheme ? colors.seasonal : colors.primary }]}>
             Edit
           </Text>
         </TouchableOpacity>
       </View>
       
-      {/* Theme Toggle */}
+      {/* Theme Toggle - replaced with ThemeControls */}
       <View style={[styles.section, { backgroundColor: colors.card }]}>
-        <View style={styles.settingRow}>
-          <View style={styles.settingIconContainer}>
-            {theme === 'light' ? (
-              <Sun size={20} color={colors.secondary} />
-            ) : (
-              <Moon size={20} color={colors.secondary} />
-            )}
-          </View>
-          <Text style={[styles.settingText, { color: colors.text }]}>
-            Dark Mode
-          </Text>
-          <Switch
-            value={theme === 'dark'}
-            onValueChange={toggleTheme}
-            trackColor={{ false: colors.gray[300], true: colors.primary }}
-            thumbColor={colors.white}
-          />
-        </View>
+        <ThemeControls />
       </View>
       
       {/* Account Settings */}
@@ -165,8 +176,8 @@ export default function ProfileScreen() {
       
       <View style={[styles.section, { backgroundColor: colors.card }]}>
         <TouchableOpacity style={styles.settingRow}>
-          <View style={styles.settingIconContainer}>
-            <MapPin size={20} color={colors.primary} />
+          <View style={[styles.settingIconContainer, isUsingSeasonalTheme && { backgroundColor: colors.seasonal + '15' }]}>
+            <MapPin size={20} color={isUsingSeasonalTheme ? colors.seasonal : colors.primary} />
           </View>
           <Text style={[styles.settingText, { color: colors.text }]}>
             Addresses
@@ -177,8 +188,8 @@ export default function ProfileScreen() {
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
         
         <TouchableOpacity style={styles.settingRow}>
-          <View style={styles.settingIconContainer}>
-            <CreditCard size={20} color={colors.primary} />
+          <View style={[styles.settingIconContainer, isUsingSeasonalTheme && { backgroundColor: colors.seasonal + '15' }]}>
+            <CreditCard size={20} color={isUsingSeasonalTheme ? colors.seasonal : colors.primary} />
           </View>
           <Text style={[styles.settingText, { color: colors.text }]}>
             Payment Methods
@@ -189,8 +200,8 @@ export default function ProfileScreen() {
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
         
         <TouchableOpacity style={styles.settingRow}>
-          <View style={styles.settingIconContainer}>
-            <Settings size={20} color={colors.primary} />
+          <View style={[styles.settingIconContainer, isUsingSeasonalTheme && { backgroundColor: colors.seasonal + '15' }]}>
+            <Settings size={20} color={isUsingSeasonalTheme ? colors.seasonal : colors.primary} />
           </View>
           <Text style={[styles.settingText, { color: colors.text }]}>
             Preferences
@@ -207,7 +218,7 @@ export default function ProfileScreen() {
       <View style={[styles.section, { backgroundColor: colors.card }]}>
         <TouchableOpacity 
           style={styles.settingRow}
-          onPress={() => router.push('/user/orders')}
+          onPress={() => router.push({pathname: '/orders'})}
         >
           <View style={styles.settingIconContainer}>
             <ShoppingBag size={20} color={colors.secondary} />
@@ -222,7 +233,7 @@ export default function ProfileScreen() {
         
         <TouchableOpacity 
           style={styles.settingRow}
-          onPress={() => router.push('/user/favorites')}
+          onPress={() => router.push({pathname: '/favorites'})}
         >
           <View style={styles.settingIconContainer}>
             <Heart size={20} color={colors.secondary} />
@@ -237,7 +248,7 @@ export default function ProfileScreen() {
         
         <TouchableOpacity 
           style={styles.settingRow}
-          onPress={() => router.push('/user/subscriptions')}
+          onPress={() => router.push('/')}
         >
           <View style={styles.settingIconContainer}>
             <Calendar size={20} color={colors.secondary} />
@@ -267,6 +278,14 @@ export default function ProfileScreen() {
       <Text style={[styles.versionText, { color: colors.subtext }]}>
         Version 1.0.0
       </Text>
+
+      {isUsingSeasonalTheme && (
+        <View style={styles.seasonFooter}>
+          <Text style={[styles.seasonFooterText, { color: colors.seasonal }]}>
+            Enjoying {season} with Farm Fresh Delivery!
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -370,5 +389,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: 'center',
     marginVertical: 24,
+  },
+  seasonalBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    marginBottom: 16,
+  },
+  seasonalText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 2,
+  },
+  seasonFooter: {
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 32,
+  },
+  seasonFooterText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
